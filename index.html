@@ -111,9 +111,8 @@ async function showInvite(code) {
   if (!inv) { clearInviteUrl(); return showLogin('Ten link aktywacyjny jest nieprawidłowy, został już użyty albo wygasł. Poproś opiekuna o nowy.'); }
   app.innerHTML = `<div class="card login">
     <h1>Aktywacja konta</h1>
-    <p class="mute">Zaproszenie: ${inv.role === 'leader' ? 'lider' : 'pomocnik'} medium <b>${esc(inv.media_name)}</b>. Wymyśl własny login i hasło, od teraz będziesz się nimi logować.</p>
+    <p class="mute">Zaproszenie: ${inv.role === 'leader' ? 'lider' : 'pomocnik'} medium <b>${esc(inv.media_name)}</b>. Wymyśl własny login i hasło. Login będzie też Twoją nazwą widoczną na stronie.</p>
     <form id="af">
-      <label for="an">Imię lub nick</label><input id="an" type="text" required>
       <label for="ae">Login (małe litery, cyfry, kropka, myślnik, podkreślnik; 3–30 znaków)</label><input id="ae" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30" required>
       <label for="ap">Hasło (min. 8 znaków)</label><input id="ap" type="password" autocomplete="new-password" minlength="8" required>
       <div class="actions"><button class="pri" type="submit">Aktywuj konto</button></div>
@@ -129,7 +128,7 @@ async function showInvite(code) {
     const {data: d, error} = await sb.auth.signUp({email: loginToEmail(login), password: $('#ap').value});
     if (error) { btn.disabled = false; return err(/registered/i.test(error.message) ? 'Ten login jest już zajęty. Wybierz inny.' : 'Nie udało się założyć konta: ' + error.message); }
     if (!d.session) { btn.disabled = false; return err('Konto utworzone, ale Supabase wymaga potwierdzenia. Daj znać opiekunowi mediów.'); }
-    const r = await sb.rpc('redeem_invite', {p_code: code, p_name: $('#an').value});
+    const r = await sb.rpc('redeem_invite', {p_code: code, p_name: login});
     if (r.error) { btn.disabled = false; return err(r.error.message); }
     clearInviteUrl(); init();
   };
