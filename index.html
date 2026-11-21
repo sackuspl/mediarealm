@@ -68,6 +68,10 @@ const fmtTime = t => new Date(t).toLocaleString('pl-PL', {day:'2-digit', month:'
 const days = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 864e5);
 const todayPL = () => new Date().toLocaleDateString('sv-SE', {timeZone: 'Europe/Warsaw'});
 const MAX_MB = 10;
+// Login zamiast e-maila: Supabase wymaga adresu, więc dopisujemy sztuczną końcówkę (maile nigdy nie są wysyłane).
+const LOGIN_DOMAIN = 'wyceny.invalid';
+const loginToEmail = v => { v = v.trim().toLowerCase(); return v.includes('@') ? v : v + '@' + LOGIN_DOMAIN; };
+const LOGIN_RE = /^[a-z0-9._-]{3,30}$/;
 
 let me = null, period = null, cur = null, timer = null, saving = false, LS = '';
 
@@ -81,17 +85,17 @@ function setStatus(msg, err) { const s = $('#st'); if (s) { s.textContent = msg;
 function showLogin(msg) {
   app.innerHTML = `<div class="card login">
     <h1>Wyceny mediów</h1>
-    <p class="mute">Zaloguj się kontem od opiekuna mediów.</p>
+    <p class="mute">Zaloguj się loginem i hasłem od opiekuna mediów.</p>
     <form id="lf">
-      <label for="em">E-mail</label><input id="em" type="email" autocomplete="username" required>
+      <label for="em">Login</label><input id="em" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
       <label for="pw">Hasło</label><input id="pw" type="password" autocomplete="current-password" required>
       <div class="actions"><button class="pri" type="submit">Zaloguj</button></div>
       <div class="err-msg" id="le">${esc(msg || '')}</div>
     </form></div>`;
   $('#lf').onsubmit = async e => {
     e.preventDefault();
-    const {error} = await sb.auth.signInWithPassword({email: $('#em').value.trim(), password: $('#pw').value});
-    if (error) { $('#le').textContent = 'Nieprawidłowy e-mail lub hasło.'; return; }
+    const {error} = await sb.auth.signInWithPassword({email: loginToEmail($('#em').value), password: $('#pw').value});
+    if (error) { $('#le').textContent = 'Nieprawidłowy login lub hasło.'; return; }
     init();
   };
 }
@@ -107,10 +111,10 @@ async function showInvite(code) {
   if (!inv) { clearInviteUrl(); return showLogin('Ten link aktywacyjny jest nieprawidłowy, został już użyty albo wygasł. Poproś opiekuna o nowy.'); }
   app.innerHTML = `<div class="card login">
     <h1>Aktywacja konta</h1>
-    <p class="mute">Zaproszenie: ${inv.role === 'leader' ? 'lider' : 'pomocnik'} medium <b>${esc(inv.media_name)}</b>. Ustaw własny e-mail i hasło, od teraz będziesz się nimi logować.</p>
+    <p class="mute">Zaproszenie: ${inv.role === 'leader' ? 'lider' : 'pomocnik'} medium <b>${esc(inv.media_name)}</b>. Wymyśl własny login i hasło, od teraz będziesz się nimi logować.</p>
     <form id="af">
       <label for="an">Imię lub nick</label><input id="an" type="text" required>
-      <label for="ae">E-mail</label><input id="ae" type="email" autocomplete="username" required>
+      <label for="ae">Login (małe litery, cyfry, kropka, myślnik, podkreślnik; 3–30 znaków)</label><input id="ae" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30" required>
       <label for="ap">Hasło (min. 8 znaków)</label><input id="ap" type="password" autocomplete="new-password" minlength="8" required>
       <div class="actions"><button class="pri" type="submit">Aktywuj konto</button></div>
       <div class="err-msg" id="ae-msg"></div>
@@ -119,10 +123,12 @@ async function showInvite(code) {
   const err = m => { $('#ae-msg').textContent = m; };
   $('#af').onsubmit = async e => {
     e.preventDefault();
+    const login = $('#ae').value.trim().toLowerCase();
+    if (!LOGIN_RE.test(login)) return err('Login może mieć 3–30 znaków: małe litery bez polskich znaków, cyfry, kropkę, myślnik lub podkreślnik.');
     const btn = e.target.querySelector('button'); btn.disabled = true; err('');
-    const {data: d, error} = await sb.auth.signUp({email: $('#ae').value.trim(), password: $('#ap').value});
-    if (error) { btn.disabled = false; return err(/registered/i.test(error.message) ? 'Ten e-mail ma już konto. Zaloguj się nim i otwórz link jeszcze raz.' : error.message); }
-    if (!d.session) { btn.disabled = false; return err('Konto utworzone, ale wymaga potwierdzenia e-maila. Potwierdź e-mail i otwórz link jeszcze raz (albo poproś opiekuna o wyłączenie potwierdzania).'); }
+    const {data: d, error} = await sb.auth.signUp({email: loginToEmail(login), password: $('#ap').value});
+    if (error) { btn.disabled = false; return err(/registered/i.test(error.message) ? 'Ten login jest już zajęty. Wybierz inny.' : 'Nie udało się założyć konta: ' + error.message); }
+    if (!d.session) { btn.disabled = false; return err('Konto utworzone, ale Supabase wymaga potwierdzenia. Daj znać opiekunowi mediów.'); }
     const r = await sb.rpc('redeem_invite', {p_code: code, p_name: $('#an').value});
     if (r.error) { btn.disabled = false; return err(r.error.message); }
     clearInviteUrl(); init();
