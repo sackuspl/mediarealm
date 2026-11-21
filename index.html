@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wyceny mediów</title>
 <meta name="theme-color" content="#f3f5f8">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='7' fill='%231d4ed8'/%3E%3Cpath fill='white' d='M12 4.5l1.8 5.7 5.7 1.8-5.7 1.8L12 19.5l-1.8-5.7L4.5 12l5.7-1.8z'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='7' fill='%231d4ed8'/%3E%3Cg fill='none' stroke='white' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M9.5 8h8M9.5 12h8M9.5 16h8M6.5 8h.01M6.5 12h.01M6.5 16h.01'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@ h1{font-size:28px}h2{font-size:20px}h3{font-size:17px}
 a{color:var(--acc);text-underline-offset:3px}
 .mute,small{color:var(--mute)}
 small{font-size:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 1px 2px rgba(15,26,43,.04),0 14px 30px -20px rgba(15,26,43,.16)}
 @media(max-width:520px){.card{padding:18px}}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 
@@ -33,8 +33,15 @@ small{font-size:14px}
 .brand b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .brand small{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .top nav{display:flex;gap:2px;flex:none}
-@media(max-width:520px){.top nav button{padding:8px 10px;font-size:15px}}
-.logo{display:inline-block;flex:none;width:36px;height:36px;border-radius:12px;background:var(--acc) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M12 2.5l2.4 7.1 7.1 2.4-7.1 2.4L12 21.5l-2.4-7.1L2.5 12l7.1-2.4z'/%3E%3C/svg%3E") center/20px no-repeat}
+@media(max-width:520px){.top{padding-left:10px}.brand{gap:10px}.brand b{font-size:15px}.top nav button{padding:8px 8px;font-size:14px}}
+.av{display:block;flex:none;width:36px;height:36px;border-radius:12px;object-fit:cover;background:#111;box-shadow:0 8px 18px -10px rgba(15,26,43,.55)}
+/* zastępnik logo: inicjały na kolorowym kafelku (dla mediów bez logo) */
+.av.ini{display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;letter-spacing:.02em;line-height:1;background:var(--ini,#3b4556);text-shadow:0 1px 2px rgba(0,0,0,.28)}
+.av.sm{width:22px;height:22px;border-radius:7px;font-size:10px;box-shadow:none}
+/* kilka logo obok siebie (nagłówek panelu, logowanie) */
+.stack{display:flex;gap:6px;flex:none}
+.stack .av{box-shadow:0 4px 10px -6px rgba(15,26,43,.55)}
+@media(max-width:520px){.stack{gap:4px}.stack .av{width:28px;height:28px;border-radius:9px;font-size:12px}.top .stack .av:nth-child(n+3){display:none}}
 
 /* formularze */
 label{display:block;font-weight:500;font-size:15px;margin:18px 0 6px}
@@ -47,10 +54,10 @@ input[type=file]{width:100%;font:inherit;color:var(--mute);background:var(--soft
 input[type=file]::file-selector-button{font:inherit;font-weight:600;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 14px;margin-right:12px;cursor:pointer}
 
 /* przyciski */
-button{font:inherit;font-weight:500;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;transition:background-color .15s,border-color .15s,color .15s}
+button{font:inherit;font-weight:500;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;transition:background-color .15s,border-color .15s,color .15s,transform .15s,box-shadow .15s}
 button:hover:not(:disabled){background:var(--bg);border-color:#d3dae4}
-button.pri{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
-button.pri:hover:not(:disabled){background:var(--acc-h);border-color:var(--acc-h)}
+button.pri{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600;box-shadow:0 8px 18px -10px rgba(29,78,216,.7),inset 0 1px 0 rgba(255,255,255,.18)}
+button.pri:hover:not(:disabled){background:var(--acc-h);border-color:var(--acc-h);transform:translateY(-1px);box-shadow:0 12px 22px -10px rgba(29,78,216,.75),inset 0 1px 0 rgba(255,255,255,.18)}
 button.ghost{background:none;border-color:transparent}
 button.ghost:hover:not(:disabled){background:var(--bg);border-color:transparent}
 button.danger{color:var(--danger)}
@@ -63,24 +70,30 @@ button:disabled{opacity:.5;cursor:default}
 .err-msg{color:var(--danger);min-height:1.4em;margin-top:12px;font-size:15px}
 
 /* logowanie i aktywacja */
-.login{max-width:420px;margin:9vh auto 0;padding:32px}
-.login .logo{width:44px;height:44px;border-radius:14px;background-size:24px;margin-bottom:20px}
+.login{max-width:420px;margin:9vh auto 0;padding:32px;position:relative;isolation:isolate;overflow:hidden}
+.login::before{content:"";position:absolute;z-index:-1;right:-70px;top:-70px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(29,78,216,.14),rgba(29,78,216,0) 70%)}
+.login .av{width:44px;height:44px;border-radius:14px;margin-bottom:20px}
+.login .av.ini{font-size:17px}
+.login .stack{gap:10px;margin-bottom:20px}
+.login .stack .av{width:48px;height:48px;border-radius:15px;margin-bottom:0}
 .login p{margin:0}.login h1{margin-bottom:8px}
 .login form+p{margin-top:20px;text-align:center}
 .login .actions{margin-top:24px}
 .login .actions button{width:100%;padding:12px}
 
-/* baner okresu: jedyny ciemny element */
-.period{background:var(--dark);color:#fff;border-radius:20px;padding:24px}
+/* baner okresu: akcent marki (niebieski gradient z delikatnymi kształtami) */
+.period{position:relative;isolation:isolate;overflow:hidden;color:#fff;border-radius:20px;padding:24px;background:linear-gradient(135deg,#2a5ee8 0%,#1d4ed8 38%,#17369c 100%);box-shadow:0 20px 40px -22px rgba(29,78,216,.65),inset 0 1px 0 rgba(255,255,255,.2)}
+.period::before{content:"";position:absolute;z-index:-1;right:-80px;top:-110px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.24),rgba(255,255,255,0) 68%)}
+.period::after{content:"";position:absolute;z-index:-1;left:-90px;bottom:-150px;width:300px;height:300px;border-radius:50%;border:1px solid rgba(255,255,255,.14);box-shadow:0 0 0 38px rgba(255,255,255,.025)}
 .period .row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px 20px}
 .period .big{font-size:clamp(30px,6vw,46px);font-weight:600;letter-spacing:-.03em;line-height:1.05}
-.period .chip{background:rgba(255,255,255,.1);color:#fff;font-size:14px;font-weight:500;padding:7px 14px}
+.period .chip{background:rgba(255,255,255,.16);color:#fff;font-size:14px;font-weight:500;padding:7px 14px;border:1px solid rgba(255,255,255,.2)}
 .period .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
-.period .stats>div{background:rgba(255,255,255,.07);border-radius:12px;padding:12px 16px}
-.period small{display:block;color:rgba(255,255,255,.62)}
+.period .stats>div{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:12px 16px}
+.period small{display:block;color:rgba(255,255,255,.8)}
 .period .stats b{font-size:18px;font-weight:600}
-.bar{height:6px;background:rgba(255,255,255,.14);border-radius:3px;margin-top:18px;overflow:hidden}
-.bar i{display:block;height:100%;background:#6b9bff;border-radius:3px}
+.bar{height:6px;background:rgba(255,255,255,.22);border-radius:3px;margin-top:18px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#fff,#c3d6ff);border-radius:3px;animation:grow .9s cubic-bezier(.2,.7,.2,1) both}
 
 /* widok medium */
 .grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:20px;align-items:start}
@@ -134,11 +147,34 @@ table.t{width:100%;border-collapse:collapse;margin-top:12px}
 #pcard .formrow{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.3fr)}
 @media(max-width:860px){#pcard .formrow{grid-template-columns:1fr}}
 .inline{display:flex;gap:8px}.inline input{flex:1;min-width:0}
+.mrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:14px 0;border-top:1px solid var(--line)}.mrow:first-child{margin-top:8px}
+.mrow .av{width:40px;height:40px}.mrow .who{flex:1;min-width:180px}
+.members{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip.off{background:#eef1f5;color:var(--mute)}
+.chip.withav{display:inline-flex;align-items:center;gap:7px;padding:3px 12px 3px 4px}
+.cell{display:inline-flex;align-items:center;gap:10px}
+#mcard{scroll-margin-top:84px}
+.mrow .av.ini{font-size:15px}
+.chip button{border:0;background:none;padding:0 0 0 6px;font:inherit;color:inherit;border-radius:0}.chip button:hover:not(:disabled){background:none;opacity:.7}
+.btn{position:relative;display:inline-block;margin:0;font-weight:500;font-size:16px;cursor:pointer;border:1px solid var(--line);border-radius:10px;background:var(--card);padding:9px 16px;transition:background-color .15s}.btn:hover{background:var(--bg)}
+.btn:focus-within{outline:2px solid var(--acc);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.logoin{display:flex;align-items:center;gap:12px}.logoin input{flex:1;min-width:0}
+.logoin .av{width:44px;height:44px;border-radius:14px}
+.hint{display:block;margin-top:6px;font-size:13px}
+
+/* tło strony: delikatne kształty i wejście elementów */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(520px 360px at 6% -4%,rgba(29,78,216,.09),transparent 70%),radial-gradient(560px 420px at 104% 102%,rgba(107,155,255,.12),transparent 70%)}
+body::after{content:"";position:fixed;top:0;right:0;width:420px;max-width:100%;height:300px;z-index:-1;pointer-events:none;background-image:radial-gradient(rgba(29,78,216,.2) 1px,transparent 1.5px);background-size:22px 22px;-webkit-mask-image:radial-gradient(circle at 100% 0,#000,transparent 70%);mask-image:radial-gradient(circle at 100% 0,#000,transparent 70%)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+@keyframes grow{from{width:0}}
+#app>*{animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
+#app>*:nth-child(2){animation-delay:.05s}#app>*:nth-child(3){animation-delay:.1s}#app>*:nth-child(4){animation-delay:.15s}#app>*:nth-child(n+5){animation-delay:.2s}
 
 /* komunikat */
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(8px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:14px;font-size:15px;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw;z-index:20;box-shadow:0 10px 30px rgba(15,26,43,.25)}
 #toast.on{opacity:1;transform:translateX(-50%)}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
@@ -164,6 +200,33 @@ const MAX_MB = 10;
 const LOGIN_DOMAIN = 'wyceny.invalid';
 const loginToEmail = v => { v = v.trim().toLowerCase(); return v.includes('@') ? v : v + '@' + LOGIN_DOMAIN; };
 const LOGIN_RE = /^[a-z0-9._-]{3,30}$/;
+const DEF_AV = {"who": "data:image/webp;base64,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", "theobserver": "data:image/webp;base64,UklGRtQDAABXRUJQVlA4IMgDAAAQGACdASqAAIAAPkkkkEWioiGTDVQUKASEtLdwufC4U8VvcX1X0AP4b9bvpv4+/kBzt9wD1Lf0v8l8t6+idpz6F/UT+jfiB8AP4z/Rvx8/f/oaO4PYA/j39N/0n9M90v+U/3X+A/ar1s/Of/C/v37jfQP/L/6p/qvzi46MYQX+B3OqSPsIxP9BGhOwU1PJyzPKkdoWDpxG08dmH1/q0kMtYUjbEtIjaAJnNX+kTr0vBwg9LTwmlhEUjSt+jBPcvibOqSPsIxP8sAAA/v+9/QJ0Tdihgogsu3/C6J8ChjOo15sScKP/vO/0H1EGPBnOZ0BSD7KBnazSo3cyKwj+8ontiRsUtw+RbxdI3PNg/3RHvgRviF0jY1z54JyESLGcL6Pi9tLfiTZrGTWABGRywaFRedwEQFFjYPEtH0t7kiWamvEFup+aA7+pbEdiMZwsAjM9+V++BGfwE9G12SEhnpvvRkvUwN9rRQpD8SqVxu/Pmaafm7Xay+rAMzj9xNAkr9ifsmtqil+agn5ohuA472+Tp3JV9vmy6tedZjzrXis3HisTGWlu34x2ZPsXUyI8Z1jlw1XiHM9+UyXWwr7uvrxsqrtNc3+UudvYNSDDXOasPbHA7M9J/DKK7l7b0zp/76oCPqca/rKZ/xt+GM/L+sKuiamOyWxqW2zJOo7Tj+Wt8jtDNabpUj90BRrMC/4MPBO36PQCPei4t6OE/3Fqyb4Kj1RGsCaq673p858MwAb6wK7eV2SN/T8Zr2OFKGAQr0668z14chY8fd2XddvoenIRFtsF9NTp00/9aTc7NoELJIBZkbzMxfDV5hvDerlGiImJAWRMLvt8Onh/EyF+w572eN7NyjjDAqjo1j58ODEboUk4QfkMYCnnSS1i22zPP31/W3IIVkthL6BCwx/GNph6xwrn/wcpfTT+FBlmT+op1ODJXAe+jHvYN/mzDhI8jckuZTWEc3+zAShQwpybiu3uqKtHwwcc4Xly54k/BkKsSqqcP3y16qB8nODcUwHrAwEfq/3tTX4yUbdUDhCt+QAZBSL8Ce9uIpsixCcbU1a2b0CKGuv5Hui/3DrEG24en52tJI0U9usGJywjDfUFnGh+8QWLcj9V+jyM0yAJmRSA50cyLl8GI6InpoyO3ump8xNBBP/+WRgljv+RWgpxqCYGG+mZC3H7Xbm6VZoUzEncWcVS/CghIxBWsfr++z8LYB7q2YGX/ybZvaGWgim4NuTvtCd4BZd9MjEgO9rTtDCeXIPhabnuM/5cKd9SxV7Em5srZ0kp6AAAAA==", "studiolossantos": "data:image/webp;base64,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", "scope": "data:image/webp;base64,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"};
+const nkey = n => String(n || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+// Wbudowane logo dopasowujemy po nazwie lub slugu medium ("Who?", "WHO", "Who We Know You Know" → who itd.).
+const DEF_RULES = [['who', /^who(weknowyouknow)?$/], ['theobserver', /^(the)?observer$/], ['studiolossantos', /^(studio)?lossantos$/], ['scope', /^scope(media)?$/]];
+const defAv = m => {
+  for (const n of [nkey(m && m.name), nkey(m && m.slug)]) {
+    if (!n) continue;
+    if (DEF_AV[n]) return DEF_AV[n];
+    const r = DEF_RULES.find(x => x[1].test(n)); if (r) return DEF_AV[r[0]];
+  }
+  return '';
+};
+// Logo ustawione w panelu ma pierwszeństwo, potem wbudowane, a na końcu kafelek z inicjałami.
+const avUrl = m => { const u = m && m.avatar_url; return u && /^(data:image\/|https:\/\/)/.test(u) ? u : defAv(m); };
+const initials = name => {
+  const w = String(name || '?').trim().split(/\s+/).filter(x => x && !/^(the|a|an)$/i.test(x));
+  return (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || '?').slice(0, 2)).toLocaleUpperCase('pl');
+};
+const hue = t => { let h = 0; for (const ch of String(t)) h = (h * 31 + ch.codePointAt(0)) % 360; return h; };
+const avHtml = (m, cls = '') => {
+  const u = avUrl(m);
+  if (u) return `<img class="av ${cls}" src="${esc(u)}" alt="">`;
+  const n = (m && m.name) || '?';
+  return `<span class="av ini ${cls}" style="--ini:hsl(${hue(n)} 52% 40%)" aria-hidden="true">${esc(initials(n))}</span>`;
+};
+const stackHtml = (list, max = 4) => `<span class="stack">${list.slice(0, max).map(m => avHtml(m)).join('')}${list.length > max ? `<span class="av ini">+${list.length - max}</span>` : ''}</span>`;
+const LOGIN_LOGOS = Object.keys(DEF_AV).map(name => ({name}));
 
 let me = null, period = null, cur = null, timer = null, saving = false, LS = '';
 
@@ -176,7 +239,7 @@ function setStatus(msg, err) { const s = $('#st'); if (s) { s.textContent = msg;
 /* ---------- logowanie ---------- */
 function showLogin(msg) {
   app.innerHTML = `<div class="card login">
-    <i class="logo"></i>
+    ${stackHtml(LOGIN_LOGOS)}
     <h1>Wyceny mediów</h1>
     <form id="lf">
       <label for="em">Login</label><input id="em" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
@@ -187,7 +250,7 @@ function showLogin(msg) {
   $('#lf').onsubmit = async e => {
     e.preventDefault();
     const {error} = await sb.auth.signInWithPassword({email: loginToEmail($('#em').value), password: $('#pw').value});
-    if (error) { $('#le').textContent = 'Nieprawidłowy login lub hasło.'; return; }
+    if (error) { $('#le').textContent = /banned/i.test(error.message) ? 'To konto zostało zablokowane. Skontaktuj się z opiekunem mediów.' : 'Nieprawidłowy login lub hasło.'; return; }
     init();
   };
 }
@@ -202,7 +265,7 @@ async function showInvite(code) {
   const inv = data && data[0];
   if (!inv) { clearInviteUrl(); return showLogin('Ten link aktywacyjny jest nieprawidłowy, został już użyty albo wygasł. Poproś opiekuna o nowy.'); }
   app.innerHTML = `<div class="card login">
-    <i class="logo"></i>
+    ${avHtml({name: inv.media_name})}
     <h1>Aktywacja konta</h1>
     <p class="mute">${inv.role === 'leader' ? 'Lider' : 'Pomocnik'} medium <b>${esc(inv.media_name)}</b></p>
     <form id="af">
@@ -231,8 +294,9 @@ async function showInvite(code) {
 async function init() {
   const {data: {session}} = await sb.auth.getSession();
   if (!session) return inviteCode ? showInvite(inviteCode) : showLogin();
-  const {data: p, error} = await sb.from('profiles')
-    .select('id,display_name,role,media_id,media(name)').eq('id', session.user.id).maybeSingle();
+  const q = c => sb.from('profiles').select('id,display_name,role,media_id,media(' + c + ')').eq('id', session.user.id).maybeSingle();
+  let {data: p, error} = await q('name,avatar_url');
+  if (error && /avatar_url/.test(error.message)) ({data: p, error} = await q('name'));
   if (error) { await sb.auth.signOut(); return showLogin('Błąd połączenia: ' + error.message); }
   if (!p && inviteCode) {
     const r = await sb.rpc('redeem_invite', {p_code: inviteCode, p_name: null});
@@ -257,22 +321,26 @@ const money = n => Number(n).toLocaleString('pl-PL', {minimumFractionDigits: 2, 
 const safeUrl = u => /^https?:\/\//i.test(u) ? u : null;
 const valOf = m => Array.isArray(m.valuations) ? m.valuations[0] : m.valuations;
 const curPeriod = () => A.periods.find(p => p.id === A.pid);
+const mediaOf = m => A.media.find(x => String(x.id) === String(m.media_id)) || m.media;
+function renderBrand() { const b = $('#abrand'); if (b && A.media.length) b.innerHTML = stackHtml(A.media); }
 
 async function showAdmin() {
-  app.innerHTML = `<header class="top"><div class="brand"><i class="logo"></i><div><b>Panel opiekuna</b><small>${esc(me.display_name)}, administrator</small></div></div><nav><button class="ghost" id="out">Wyloguj</button></nav></header>
+  app.innerHTML = `<header class="top"><div class="brand"><span id="abrand">${stackHtml(LOGIN_LOGOS)}</span><div><b>Panel opiekuna</b><small>${esc(me.display_name)}, administrator</small></div></div><nav><button class="ghost" id="tomedia">Media</button><button class="ghost" id="out">Wyloguj</button></nav></header>
     <section class="card" id="pcard">Ładowanie…</section>
     <section class="card" id="sums"></section>
     <div id="mats"></div>
-    <section class="card" id="inv"></section>`;
+    <section class="card" id="inv"></section>
+    <section class="card" id="mcard"></section>`;
   $('#out').onclick = logout; app.onclick = adminClick; app.onchange = adminChange;
+  $('#tomedia').onclick = () => $('#mcard').scrollIntoView({behavior: 'smooth', block: 'start'});
   const [pr, mr] = await Promise.all([
     sb.from('periods').select('*').lte('start_date', todayPL()).order('number', {ascending: false}),
-    sb.from('media').select('id,name,slug').order('name')]);
+    selMedia()]);
   if (pr.error || mr.error) { $('#pcard').textContent = 'Nie udało się wczytać danych: ' + (pr.error || mr.error).message + '. Odśwież stronę.'; return; }
   A.periods = pr.data; A.media = mr.data;
   const t = todayPL();
   A.pid = (A.periods.find(p => p.end_date < t && p.status !== 'published') || A.periods[0] || {}).id;
-  renderPeriod(); renderInvForm(); await loadMats(); loadInvites();
+  renderPeriod(); renderInvForm(); renderMedia(); await loadMats(); loadInvites();
 }
 
 function renderPeriod() {
@@ -325,7 +393,7 @@ function renderMats() {
     const files = m.material_files.map(f => `<div class="file"><img src="${esc(A.urls[f.storage_path] || '')}" data-url="${esc(A.urls[f.storage_path] || '')}" alt="${esc(f.file_name)}"><span>${esc(f.file_name)}</span></div>`).join('');
     return `<article class="card mat" data-card="${m.id}">
       <div class="row"><h3>${esc(m.title)}</h3><span data-badge>${badge(m)}</span></div>
-      <div class="meta"><span class="chip">${esc(m.media.name)}</span><span>${esc(m.author ? m.author.display_name : '?')}</span><span>wysłano ${fmtTime(m.submitted_at)}</span></div>
+      <div class="meta"><span class="chip withav">${avHtml(mediaOf(m), 'sm')}${esc(m.media.name)}</span><span>${esc(m.author ? m.author.display_name : '?')}</span><span>wysłano ${fmtTime(m.submitted_at)}</span></div>
       ${m.description ? `<p>${esc(m.description)}</p>` : ''}
       ${links ? `<div class="links" style="margin-top:10px">${links}</div>` : ''}
       ${files ? `<div class="files">${files}</div>` : ''}
@@ -340,11 +408,11 @@ function renderMats() {
 function renderSums() {
   const by = {}; let un = 0;
   A.mats.forEach(m => {
-    const r = by[m.media.name] = by[m.media.name] || {n: 0, sum: 0, un: 0};
+    const r = by[m.media.name] = by[m.media.name] || {n: 0, sum: 0, un: 0, m: mediaOf(m)};
     r.n++; const v = valOf(m);
     if (v) r.sum += Number(v.amount); else { r.un++; un++; }
   });
-  const rows = Object.keys(by).sort().map(k => `<tr><td>${esc(k)}</td><td class="n">${by[k].n}</td><td class="n">${by[k].un}</td><td class="n">${money(by[k].sum)}</td></tr>`).join('');
+  const rows = Object.keys(by).sort().map(k => `<tr><td><span class="cell">${avHtml(by[k].m, 'sm')}${esc(k)}</span></td><td class="n">${by[k].n}</td><td class="n">${by[k].un}</td><td class="n">${money(by[k].sum)}</td></tr>`).join('');
   const total = Object.values(by).reduce((a, r) => a + r.sum, 0);
   $('#sums').innerHTML = `<h2>Sumy okresu</h2>` + (rows
     ? `<div class="tiles"><div><small>Materiały</small><b>${A.mats.length}</b></div><div><small>Bez wyceny</small><b>${un}</b></div><div><small>Suma okresu</small><b>${money(total)}</b></div></div><table class="t"><tr><th>Medium</th><th class="n">Materiały</th><th class="n">Bez wyceny</th><th class="n">Suma</th></tr>${rows}<tr class="tot"><td>Razem</td><td class="n">${A.mats.length}</td><td class="n">${un}</td><td class="n">${money(total)}</td></tr></table>`
@@ -395,6 +463,107 @@ async function adminClick(e) {
   }
 }
 
+/* ---------- media: dodawanie, logo, usuwanie, dostępy ---------- */
+async function selMedia() {
+  let r = await sb.from('media').select('id,name,slug,avatar_url').order('name');
+  if (r.error && /avatar_url/.test(r.error.message)) r = await sb.from('media').select('id,name,slug').order('name');
+  return r;
+}
+const SQL_HINT = 'Baza nie ma jeszcze uprawnień. Uruchom plik media_admin.sql w Supabase (SQL Editor).';
+const dbMsg = e => /row-level|policy|permission denied|schema cache|avatar_url|brak uprawnień|Could not find/i.test(e.message || '') ? SQL_HINT : e.message;
+const slugify = t => t.toLowerCase().replace(/ł/g, 'l').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'media';
+function toAvatar(file) {
+  return new Promise((ok, no) => {
+    if (!file || !file.type.startsWith('image/')) return no(new Error('Wybierz plik graficzny.'));
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => {
+      const c = document.createElement('canvas'); c.width = c.height = 192;
+      const m = Math.min(im.width, im.height), g = c.getContext('2d');
+      g.imageSmoothingQuality = 'high';
+      g.drawImage(im, (im.width - m) / 2, (im.height - m) / 2, m, m, 0, 0, 192, 192);
+      URL.revokeObjectURL(url);
+      const d = c.toDataURL('image/webp', .9); ok(d.startsWith('data:image/webp') ? d : c.toDataURL('image/png'));
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); no(new Error('Nie udało się wczytać obrazu.')); };
+    im.src = url;
+  });
+}
+async function renderMedia() {
+  const box = $('#mcard'); if (!box) return;
+  renderBrand();
+  const mr = await sb.rpc('list_members');
+  const by = {}; (mr.data || []).forEach(u => (by[u.media_id] = by[u.media_id] || []).push(u));
+  const chips = m => (by[String(m.id)] || []).map(u => `<span class="chip${u.blocked ? ' off' : ''}">${esc(u.display_name)} · ${u.role === 'leader' ? 'lider' : 'pomocnik'}${u.blocked ? ' · zablokowany' : ''}<button data-m="${u.blocked ? 'allow' : 'block'}" data-u="${esc(u.id)}" aria-label="${u.blocked ? 'Przywróć dostęp' : 'Odbierz dostęp'}">${u.blocked ? '↺' : '×'}</button></span>`).join('') || '<small>Brak kont.</small>';
+  const rows = A.media.map(m => `<div class="mrow">${avHtml(m)}<div class="who"><b>${esc(m.name)}</b><div class="members">${chips(m)}</div></div>
+    <label class="btn">Zmień logo<input class="sr" type="file" accept="image/*" data-m="logo" data-id="${esc(m.id)}"></label>
+    ${m.avatar_url ? `<button class="ghost" data-m="rmlogo" data-id="${esc(m.id)}">Usuń logo</button>` : ''}
+    <button class="ghost danger" data-m="del" data-id="${esc(m.id)}">Usuń medium</button></div>`).join('');
+  box.innerHTML = `<h2>Media</h2>
+    <div class="formrow"><div><label for="mn">Nazwa nowego medium</label><input id="mn" type="text" maxlength="60"></div><div><label for="mf">Logo</label><div class="logoin"><span id="mprev">${avHtml({name: 'Nowe medium'})}</span><input id="mf" type="file" accept="image/*"></div><small class="hint">Najlepiej kwadratowy obraz, np. 512×512 px. Zostanie przycięty do kwadratu. Bez logo medium dostanie kafelek z inicjałami.</small></div></div>
+    <div class="actions"><button class="pri" data-m="add">Dodaj medium</button></div>
+    ${mr.error ? `<p class="err-msg">${esc(dbMsg(mr.error))}</p>` : ''}<div>${rows}</div>`;
+  box.onclick = mediaClick; box.onchange = mediaChange;
+  const prev = async () => {
+    let av = null; const f = $('#mf').files[0];
+    if (f) { try { av = await toAvatar(f); } catch (x) { toast(x.message); $('#mf').value = ''; } }
+    $('#mprev').innerHTML = avHtml({name: $('#mn').value.trim() || 'Nowe medium', avatar_url: av});
+  };
+  $('#mn').oninput = prev; $('#mf').onchange = prev;
+}
+async function mediaChange(e) {
+  const t = e.target; if (t.dataset.m !== 'logo' || !t.files[0]) return;
+  try {
+    const av = await toAvatar(t.files[0]);
+    const r = await sb.from('media').update({avatar_url: av}).eq('id', t.dataset.id).select('id');
+    if (r.error || !r.data.length) return toast(r.error ? dbMsg(r.error) : SQL_HINT);
+    A.media.find(x => String(x.id) === t.dataset.id).avatar_url = av;
+    toast('Logo zapisane.'); renderMedia();
+  } catch (x) { toast(x.message); }
+}
+async function mediaClick(e) {
+  const b = e.target.closest('button[data-m]'); if (!b) return;
+  const k = b.dataset.m;
+  if (k === 'add') {
+    const name = $('#mn').value.trim(); if (!name) return toast('Wpisz nazwę medium.');
+    if (A.media.some(x => x.name.toLowerCase() === name.toLowerCase())) return toast('Medium o takiej nazwie już istnieje.');
+    b.disabled = true;
+    try {
+      const f = $('#mf').files[0], av = f ? await toAvatar(f) : null;
+      const taken = new Set(A.media.map(m => m.slug)); let slug = slugify(name), n = 2; const s0 = slug;
+      while (taken.has(slug)) slug = s0 + '-' + n++;
+      const r = await sb.from('media').insert({name, slug, avatar_url: av}).select('id,name,slug,avatar_url').single();
+      if (r.error) return toast(dbMsg(r.error));
+      A.media.push(r.data); A.media.sort((a, c) => a.name.localeCompare(c.name, 'pl'));
+      renderInvForm(); renderPeriod(); renderMedia(); toast('Medium dodane.');
+    } catch (x) { toast(x.message); } finally { b.disabled = false; }
+  }
+  if (k === 'rmlogo') {
+    const r = await sb.from('media').update({avatar_url: null}).eq('id', b.dataset.id).select('id');
+    if (r.error || !r.data.length) return toast(r.error ? dbMsg(r.error) : SQL_HINT);
+    A.media.find(x => String(x.id) === b.dataset.id).avatar_url = null;
+    toast('Logo usunięte.'); return renderMedia();
+  }
+  if (k === 'block' || k === 'allow') {
+    if (k === 'block' && !confirm('Odebrać dostęp temu kontu? Zostanie wylogowane i nie zaloguje się, ale jego materiały zostają. Możesz to cofnąć.')) return;
+    const r = await sb.rpc('set_member_access', {p_user: b.dataset.u, p_allow: k === 'allow'});
+    if (r.error) return toast(dbMsg(r.error));
+    toast(k === 'allow' ? 'Dostęp przywrócony.' : 'Dostęp odebrany.'); renderMedia();
+  }
+  if (k === 'del') {
+    const m = A.media.find(x => String(x.id) === b.dataset.id);
+    const ans = prompt('Usunięcie medium „' + m.name + '” kasuje bezpowrotnie jego materiały, wyceny, zaproszenia i wszystkie konta.\n\nAby potwierdzić, wpisz nazwę medium:');
+    if (ans === null) return;
+    if (ans.trim() !== m.name) return toast('Nazwa się nie zgadza. Nic nie usunięto.');
+    const fr = await sb.from('material_files').select('storage_path').eq('media_id', m.id);
+    const paths = (fr.data || []).map(x => x.storage_path);
+    const r = await sb.rpc('delete_media', {p_id: String(m.id)});
+    if (r.error) return toast('Nie udało się usunąć: ' + dbMsg(r.error));
+    for (let i = 0; i < paths.length; i += 100) { try { await sb.storage.from('materials').remove(paths.slice(i, i + 100)); } catch (x) {} }
+    A.media = A.media.filter(x => x.id !== m.id); if (A.mid === m.id) A.mid = '';
+    renderInvForm(); renderPeriod(); renderMedia(); await loadMats(); loadInvites(); toast('Medium usunięte.');
+  }
+}
+
 /* ---------- zaproszenia ---------- */
 function renderInvForm() {
   $('#inv').innerHTML = `<h2>Zaproszenia</h2>
@@ -427,7 +596,7 @@ async function loadInvites() {
     const used = !!i.used_at, dead = !used && i.expires_at && new Date(i.expires_at) < now;
     const st = used ? 'użyte przez ' + esc(i.user ? i.user.display_name : '?') : dead ? 'wygasło' : 'ważne';
     const act = !used && !dead ? `<button class="ghost danger" data-act="revoke" data-code="${esc(i.code)}">Unieważnij</button>` : '';
-    return `<tr><td>${esc(i.media.name)}</td><td>${i.role === 'leader' ? 'lider' : 'pomocnik'}</td><td>${esc(i.note)}</td><td><span class="badge ${used ? 'ok' : dead ? '' : 'cur'}">${st}</span></td><td>${act}</td></tr>`;
+    return `<tr><td><span class="cell">${avHtml(A.media.find(x => x.name === i.media.name) || i.media, 'sm')}${esc(i.media.name)}</span></td><td>${i.role === 'leader' ? 'lider' : 'pomocnik'}</td><td>${esc(i.note)}</td><td><span class="badge ${used ? 'ok' : dead ? '' : 'cur'}">${st}</span></td><td>${act}</td></tr>`;
   };
   box.innerHTML = data.length ? `<table class="t"><tr><th>Medium</th><th>Rola</th><th>Notatka</th><th>Stan</th><th></th></tr>${data.map(row).join('')}</table>` : '<p class="mute">Brak zaproszeń.</p>';
 }
@@ -446,7 +615,7 @@ function showApp() {
       <div class="bar"><i style="width:${pct}%"></i></div></section>`;
   }
   app.innerHTML = `
-  <header class="top"><div class="brand"><i class="logo"></i><div><b>${esc(me.media.name)}</b><small>${esc(me.display_name)}, ${me.role === 'leader' ? 'lider' : 'pomocnik'}</small></div></div>
+  <header class="top"><div class="brand">${avHtml(me.media)}<div><b>${esc(me.media.name)}</b><small>${esc(me.display_name)}, ${me.role === 'leader' ? 'lider' : 'pomocnik'}</small></div></div>
     <nav><button class="ghost" id="arch">Archiwum</button><button class="ghost" id="out">Wyloguj</button></nav></header>
   ${banner}
   <div class="grid">
@@ -496,7 +665,7 @@ async function loadLists() {
 
 /* ---------- archiwum medium (ostatnie 5 opublikowanych okresów) ---------- */
 async function showArchive() {
-  app.innerHTML = `<header class="top"><div class="brand"><i class="logo"></i><div><b>Archiwum wycen</b><small>${esc(me.media.name)}</small></div></div><nav><button class="ghost" id="back">Wróć do materiałów</button><button class="ghost" id="out">Wyloguj</button></nav></header>
+  app.innerHTML = `<header class="top"><div class="brand">${avHtml(me.media)}<div><b>Archiwum wycen</b><small>${esc(me.media.name)}</small></div></div><nav><button class="ghost" id="back">Wróć do materiałów</button><button class="ghost" id="out">Wyloguj</button></nav></header>
     <div id="arc"><p class="mute">Ładowanie…</p></div>`;
   $('#out').onclick = logout; $('#back').onclick = () => init();
   const fail = m => { $('#arc').innerHTML = `<div class="card"><p class="err-msg">Nie udało się wczytać archiwum: ${esc(m)}. Odśwież stronę.</p></div>`; };
