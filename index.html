@@ -65,8 +65,8 @@ button.danger:hover:not(:disabled){background:var(--danger-soft);border-color:#f
 button.ghost.danger:hover:not(:disabled){border-color:transparent}
 button:disabled{opacity:.5;cursor:default}
 .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:22px}
-#st{font-size:14px;color:var(--mute);margin-left:auto}
-#st.err{color:var(--danger)}
+#st,#sst{font-size:14px;color:var(--mute);margin-left:auto}
+#st.err,#sst.err{color:var(--danger)}
 .err-msg{color:var(--danger);min-height:1.4em;margin-top:12px;font-size:15px}
 
 /* logowanie i aktywacja */
@@ -128,7 +128,7 @@ ul.list li.mute{padding:8px;font-size:15px}
 .mat .row>span{color:var(--mute)}
 .mat p{white-space:pre-wrap;margin:12px 0 0}.mat>p:only-child{margin:0}
 .mat .links a{display:block;overflow-wrap:anywhere}
-.val{display:grid;grid-template-columns:140px minmax(0,1fr) auto;gap:12px;margin-top:18px;padding:16px;background:var(--soft);border:1px solid var(--line);border-radius:12px;align-items:end}
+.val{display:grid;grid-template-columns:minmax(120px,220px) auto;justify-content:start;gap:12px;margin-top:18px;padding:16px;background:var(--soft);border:1px solid var(--line);border-radius:12px;align-items:end}
 .val label{margin:0 0 6px;font-size:14px}.val input{background-color:#fff}
 @media(max-width:700px){.val{grid-template-columns:1fr}}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:16px 0 4px}
@@ -162,6 +162,32 @@ table.t{width:100%;border-collapse:collapse;margin-top:12px}
 .logoin{display:flex;align-items:center;gap:12px}.logoin input{flex:1;min-width:0}
 .logoin .av{width:44px;height:44px;border-radius:14px}
 .hint{display:block;margin-top:6px;font-size:13px}
+
+/* podsumowanie okresu (widok medium) */
+.col{display:grid;gap:20px;min-width:0}
+details.card.sumbox{padding:0}
+.sumbox>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:18px 24px;border-radius:16px}
+.sumbox>summary::-webkit-details-marker{display:none}
+.sumbox>summary::after{content:"";flex:none;width:9px;height:9px;margin:-3px 2px 0 4px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);transition:transform .2s}
+.sumbox[open]>summary::after{transform:rotate(-135deg);margin-top:3px}
+.sumbox .tt{flex:1;min-width:200px}
+.sumbox .tt b{display:block;font-size:18px;font-weight:600;letter-spacing:-.01em}
+.sumbox .tt small{display:block}
+.sumbody{padding:4px 24px 24px;border-top:1px solid var(--line)}
+.sumbody>p{margin:16px 0 0}
+ul.tips{margin:10px 0 0;padding-left:20px}
+ul.tips li+li{margin-top:4px}
+.sumbody>small{display:block;margin-top:12px}
+@media(max-width:520px){.sumbox>summary{padding:16px 18px}.sumbody{padding:2px 18px 18px}}
+
+/* panel admina: grupy według mediów i podsumowania */
+#mats{display:grid;gap:28px}
+.grp{display:grid;gap:16px}
+.grp .mat+.mat{margin-top:0}
+.ghead{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.ghead .badge{margin-left:auto}
+.sumv{border-left:4px solid var(--acc)}
+.sumv.none{border:1px dashed #c5cedb;border-radius:12px;padding:12px 16px;color:var(--mute);font-size:15px}
 
 /* tło strony: delikatne kształty i wejście elementów */
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(520px 360px at 6% -4%,rgba(29,78,216,.09),transparent 70%),radial-gradient(560px 420px at 104% 102%,rgba(107,155,255,.12),transparent 70%)}
@@ -315,7 +341,10 @@ async function init() {
 }
 
 /* ---------- panel admina ---------- */
-const A = {periods: [], media: [], pid: null, mid: '', mats: [], urls: {}};
+const A = {periods: [], media: [], pid: null, mid: '', mats: [], urls: {}, sums: {}, sumErr: ''};
+const SUM_HINT = 'Podsumowania nie działają, bo baza nie ma jeszcze tabeli. Uruchom plik podsumowania.sql w Supabase (SQL Editor).';
+const sumMsg = e => /relation|does not exist|schema cache|Could not find|permission denied|summaries/i.test(e.message || '') ? SUM_HINT : e.message;
+const sumSaveMsg = e => /row-level|policy/i.test(e.message || '') ? 'Nie można zapisać podsumowania: okres jest już zamknięty albo brak uprawnień.' : sumMsg(e);
 const PST = {open: 'otwarty', closed: 'zamknięty', published: 'opublikowany'};
 const money = n => Number(n).toLocaleString('pl-PL', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' $';
 const safeUrl = u => /^https?:\/\//i.test(u) ? u : null;
@@ -339,7 +368,8 @@ async function showAdmin() {
   if (pr.error || mr.error) { $('#pcard').textContent = 'Nie udało się wczytać danych: ' + (pr.error || mr.error).message + '. Odśwież stronę.'; return; }
   A.periods = pr.data; A.media = mr.data;
   const t = todayPL();
-  A.pid = (A.periods.find(p => p.end_date < t && p.status !== 'published') || A.periods[0] || {}).id;
+  // domyślnie bieżący okres (taki, w którym jest dzisiejsza data); gdyby żaden nie pasował, najnowszy rozpoczęty
+  A.pid = (A.periods.find(p => p.start_date <= t && t <= p.end_date) || A.periods[0] || {}).id;
   renderPeriod(); renderInvForm(); renderMedia(); await loadMats(); loadInvites();
 }
 
@@ -368,12 +398,20 @@ async function setPeriodStatus(status, okMsg) {
 
 async function loadMats() {
   $('#mats').innerHTML = '<p class="mute">Ładowanie materiałów…</p>';
-  const {data, error} = await sb.from('materials')
-    .select('id,media_id,title,description,links,submitted_at,media(name),author:profiles!author_id(display_name),material_files(file_name,storage_path),valuations(amount,note)')
-    .eq('period_id', A.pid).eq('status', 'submitted').order('submitted_at');
+  const [mr, sr] = await Promise.all([
+    sb.from('materials')
+      .select('id,media_id,title,description,links,submitted_at,media(name),author:profiles!author_id(display_name),material_files(file_name,storage_path),valuations(amount)')
+      .eq('period_id', A.pid).eq('status', 'submitted').order('submitted_at'),
+    sb.from('summaries')
+      .select('media_id,description,links,files,updated_at,author:profiles!author_id(display_name)')
+      .eq('period_id', A.pid)]);
+  const {data, error} = mr;
   if (error) { $('#mats').innerHTML = `<p class="err-msg">Nie udało się wczytać materiałów: ${esc(error.message)}</p>`; return; }
   A.mats = data;
-  const paths = data.flatMap(m => m.material_files.map(f => f.storage_path));
+  A.sums = {}; A.sumErr = sr.error ? sumMsg(sr.error) : '';
+  (sr.data || []).forEach(s => { A.sums[String(s.media_id)] = s; });
+  const paths = data.flatMap(m => m.material_files.map(f => f.storage_path))
+    .concat(Object.values(A.sums).flatMap(s => (s.files || []).map(f => f.path)));
   A.urls = {};
   if (paths.length) {
     const r = await sb.storage.from('materials').createSignedUrls(paths, 3600);
@@ -384,25 +422,56 @@ async function loadMats() {
 
 function badge(m) { const v = valOf(m); return v ? `<span class="badge ok">wyceniony: ${money(v.amount)}</span>` : '<span class="badge warn">niewyceniony</span>'; }
 
-function renderMats() {
-  const list = A.mats.filter(m => !A.mid || m.media_id === A.mid);
-  if (!list.length) { $('#mats').innerHTML = '<div class="card mat"><p class="mute">Brak wysłanych materiałów w tym okresie.</p></div>'; return; }
-  $('#mats').innerHTML = list.map(m => {
-    const v = valOf(m) || {};
-    const links = (m.links || []).map(u => safeUrl(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>` : `<span>${esc(u)}</span>`).join('');
-    const files = m.material_files.map(f => `<div class="file"><img src="${esc(A.urls[f.storage_path] || '')}" data-url="${esc(A.urls[f.storage_path] || '')}" alt="${esc(f.file_name)}"><span>${esc(f.file_name)}</span></div>`).join('');
-    return `<article class="card mat" data-card="${m.id}">
+const plMat = n => n === 1 ? 'materiał' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 'materiały' : 'materiałów';
+const grpTotal = mid => {
+  const ms = A.mats.filter(m => String(m.media_id) === String(mid));
+  const sum = ms.reduce((a, m) => a + (valOf(m) ? Number(valOf(m).amount) : 0), 0);
+  const un = ms.filter(m => !valOf(m)).length;
+  return 'suma: ' + money(sum) + (un ? ' · bez wyceny: ' + un : '');
+};
+const linkList = arr => (arr || []).map(u => safeUrl(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>` : `<span>${esc(u)}</span>`).join('');
+const thumb = (url, name) => `<div class="file"><img src="${esc(url)}" data-url="${esc(url)}" alt="${esc(name)}"><span>${esc(name)}</span></div>`;
+
+// podsumowanie medium: pokazywane na samej górze wyceny danego medium
+function sumView(mid) {
+  const s = A.sums[String(mid)];
+  if (!s) return '<div class="sumv none">Medium nie dodało podsumowania (jest opcjonalne).</div>';
+  const links = linkList(s.links), files = (s.files || []).map(f => thumb(A.urls[f.path] || '', f.name)).join('');
+  return `<article class="card mat sumv">
+    <div class="row"><h3>Podsumowanie medium</h3><span>${s.author ? esc(s.author.display_name) + ', ' : ''}zapisano ${fmtTime(s.updated_at)}</span></div>
+    ${s.description ? `<p>${esc(s.description)}</p>` : ''}
+    ${links ? `<div class="links" style="margin-top:10px">${links}</div>` : ''}
+    ${files ? `<div class="files">${files}</div>` : ''}</article>`;
+}
+
+function matCard(m) {
+  const v = valOf(m) || {};
+  const links = linkList(m.links);
+  const files = m.material_files.map(f => thumb(A.urls[f.storage_path] || '', f.file_name)).join('');
+  return `<article class="card mat" data-card="${m.id}">
       <div class="row"><h3>${esc(m.title)}</h3><span data-badge>${badge(m)}</span></div>
-      <div class="meta"><span class="chip withav">${avHtml(mediaOf(m), 'sm')}${esc(m.media.name)}</span><span>${esc(m.author ? m.author.display_name : '?')}</span><span>wysłano ${fmtTime(m.submitted_at)}</span></div>
+      <div class="meta"><span>${esc(m.author ? m.author.display_name : '?')}</span><span>wysłano ${fmtTime(m.submitted_at)}</span></div>
       ${m.description ? `<p>${esc(m.description)}</p>` : ''}
       ${links ? `<div class="links" style="margin-top:10px">${links}</div>` : ''}
       ${files ? `<div class="files">${files}</div>` : ''}
       <div class="val">
         <div><label>Kwota ($)</label><input type="text" inputmode="decimal" aria-label="Kwota w dolarach" data-amt value="${v.amount != null ? String(v.amount).replace('.', ',') : ''}"></div>
-        <div><label>Za co</label><input type="text" aria-label="Za co" data-note maxlength="300" value="${esc(v.note || '')}"></div>
         <button class="pri" data-act="save" data-id="${m.id}">Zapisz wycenę</button>
       </div></article>`;
-  }).join('');
+}
+
+// każde medium to osobna grupa: nagłówek, na górze jego podsumowanie, niżej jego materiały z kwotami
+function renderMats() {
+  const note = A.sumErr ? `<p class="err-msg">${esc(A.sumErr)}</p>` : '';
+  const groups = A.media.filter(x => !A.mid || String(x.id) === String(A.mid))
+    .map(med => ({med, ms: A.mats.filter(m => String(m.media_id) === String(med.id))}))
+    .filter(g => A.mid || g.ms.length || A.sums[String(g.med.id)]);
+  if (!groups.length) { $('#mats').innerHTML = note + '<div class="card mat"><p class="mute">Brak wysłanych materiałów w tym okresie.</p></div>'; return; }
+  $('#mats').innerHTML = note + groups.map(g => `<section class="grp" data-media="${esc(g.med.id)}">
+    <div class="ghead">${avHtml(g.med)}<h2>${esc(g.med.name)}</h2><span class="mute">${g.ms.length} ${plMat(g.ms.length)}</span><span class="badge cur" data-gsum>${grpTotal(g.med.id)}</span></div>
+    ${sumView(g.med.id)}
+    ${g.ms.length ? g.ms.map(matCard).join('') : '<div class="card mat"><p class="mute">Brak wysłanych materiałów.</p></div>'}
+  </section>`).join('');
 }
 
 function renderSums() {
@@ -423,11 +492,12 @@ async function saveValuation(id, card) {
   const raw = card.querySelector('[data-amt]').value.trim().replace(/\s/g, '').replace(',', '.');
   const amount = Number(raw);
   if (!raw || !isFinite(amount) || amount < 0) return toast('Wpisz kwotę jako liczbę, np. 1500 albo 1500,50.');
-  const note = card.querySelector('[data-note]').value.trim();
-  const {error} = await sb.from('valuations').upsert({material_id: id, amount, note, valued_by: me.id, valued_at: new Date().toISOString()}, {onConflict: 'material_id'});
+  const {error} = await sb.from('valuations').upsert({material_id: id, amount, note: '', valued_by: me.id, valued_at: new Date().toISOString()}, {onConflict: 'material_id'});
   if (error) return toast('Nie udało się zapisać wyceny: ' + error.message);
-  const m = A.mats.find(x => x.id === id); m.valuations = {amount, note};
-  card.querySelector('[data-badge]').innerHTML = badge(m); renderSums(); toast('Wycena zapisana.');
+  const m = A.mats.find(x => x.id === id); m.valuations = {amount};
+  card.querySelector('[data-badge]').innerHTML = badge(m); renderSums();
+  const grp = card.closest('.grp'), gb = grp && grp.querySelector('[data-gsum]'); if (gb) gb.textContent = grpTotal(m.media_id);
+  toast('Wycena zapisana.');
 }
 
 async function adminChange(e) {
@@ -556,6 +626,8 @@ async function mediaClick(e) {
     if (ans.trim() !== m.name) return toast('Nazwa się nie zgadza. Nic nie usunięto.');
     const fr = await sb.from('material_files').select('storage_path').eq('media_id', m.id);
     const paths = (fr.data || []).map(x => x.storage_path);
+    const sf = await sb.from('summaries').select('files').eq('media_id', m.id);
+    (sf.data || []).forEach(s => (s.files || []).forEach(f => paths.push(f.path)));
     const r = await sb.rpc('delete_media', {p_id: String(m.id)});
     if (r.error) return toast('Nie udało się usunąć: ' + dbMsg(r.error));
     for (let i = 0; i < paths.length; i += 100) { try { await sb.storage.from('materials').remove(paths.slice(i, i + 100)); } catch (x) {} }
@@ -619,6 +691,8 @@ function showApp() {
     <nav><button class="ghost" id="arch">Archiwum</button><button class="ghost" id="out">Wyloguj</button></nav></header>
   ${banner}
   <div class="grid">
+    <div class="col">
+    ${period ? sumHtml() : ''}
     <section class="card">
       <h2 id="mode">Nowy materiał</h2>
       <label for="ti">Tytuł</label><input id="ti" type="text" maxlength="200">
@@ -634,6 +708,7 @@ function showApp() {
         <span id="st" aria-live="polite"></span>
       </div>
     </section>
+    </div>
     <aside class="card">
       <h3>Moje szkice</h3><ul class="list" id="drafts"></ul>
       <h3 style="margin-top:22px">Wysłane w tym okresie</h3><ul class="list" id="sent"></ul>
@@ -649,6 +724,131 @@ function showApp() {
   $('#drafts').onclick = $('#sent').onclick = async e => {
     const b = e.target.closest('button[data-id]'); if (!b) return;
     await persistSafe(); lsClear(); openMaterial(b.dataset.id);
+  };
+  if (period) initSummary();
+}
+
+/* ---------- podsumowanie okresu (opcjonalne, jedno na medium w okresie) ---------- */
+let S = {id: null, files: []};
+const SLS = () => 'sum:' + me.id + ':' + period.id;
+const sumLinks = () => $('#sl').value.split('\n').map(x => x.trim()).filter(Boolean);
+const cleanFiles = () => S.files.map(({path, name, size}) => ({path, name, size}));
+function setSStatus(msg, err) { const s = $('#sst'); if (s) { s.textContent = msg; s.className = err ? 'err' : ''; } }
+function sumBadge(state) {
+  const b = $('#sumbadge'); if (!b) return;
+  const t = state || (S.id ? 'zapisane' : 'nie dodano');
+  b.textContent = t; b.className = 'badge' + (t === 'zapisane' ? ' ok' : t === 'niedostępne' ? ' warn' : '');
+}
+function sumHtml() {
+  return `<details class="card sumbox" id="sumbox">
+    <summary><span class="tt"><b>Podsumowanie okresu</b><small>Opcjonalne. Opisz osiągnięcia i wszystko, co ma wpłynąć na wycenę.</small></span><span class="chip off">opcjonalne</span><span class="badge" id="sumbadge">nie dodano</span></summary>
+    <div class="sumbody">
+      <p>Podsumowanie jest <b>opcjonalne</b>, ale bardzo pomaga w wycenie. Opiekun zobaczy je na samej górze wyceny Waszego medium, nad materiałami. Wypisz tu wszystko, co powinno zostać wzięte pod uwagę:</p>
+      <ul class="tips">
+        <li>osiągnięcia i wyniki z tego okresu: zasięgi, wyświetlenia, rekordy, wyróżnienia, nowi odbiorcy</li>
+        <li>największe projekty, akcje i wydarzenia, które zrobiło medium</li>
+        <li>pracę, której nie widać w pojedynczych materiałach: organizację, współprace, moderację, rozwój kanału</li>
+        <li>wkład konkretnych osób z zespołu</li>
+        <li>kontekst, który wpływa na ocenę: utrudnienia, nietypowe okoliczności, plany na kolejny okres</li>
+      </ul>
+      <small class="mute">Nie musi być długie, ważne żeby było konkretne. Screeny są mile widziane, ale najważniejszy jest opis. Możesz edytować podsumowanie, dopóki okres jest otwarty.</small>
+      <label for="sd">Podsumowanie</label>
+      <textarea id="sd" style="min-height:170px" placeholder="Np. najważniejsze osiągnięcia, wyniki i zasięgi, kto co zrobił, na co zwrócić uwagę przy wycenie…"></textarea>
+      <label for="sl">Linki do screenów (opcjonalnie)</label>
+      <textarea id="sl" style="min-height:64px" placeholder="https://... (każdy w nowej linii)"></textarea>
+      <label for="sf">Screeny (opcjonalnie, do ${MAX_MB} MB)</label>
+      <input id="sf" type="file" accept="image/*" multiple>
+      <div class="files" id="sfiles"></div>
+      <div class="actions"><button class="pri" id="ssave">Zapisz podsumowanie</button><span id="sst" aria-live="polite"></span></div>
+    </div></details>`;
+}
+function initSummary() {
+  S = {id: null, files: []};
+  ['#sd', '#sl'].forEach(s => $(s).addEventListener('input', () => {
+    try { localStorage.setItem(SLS(), JSON.stringify({d: $('#sd').value, l: $('#sl').value})); } catch (e) {}
+    setSStatus('Niezapisane zmiany…');
+  }));
+  $('#ssave').onclick = () => saveSummary();
+  $('#sf').onchange = e => { addSumFiles([...e.target.files]); e.target.value = ''; };
+  loadSummary();
+}
+async function loadSummary() {
+  const r = await sb.from('summaries').select('id,description,links,files').eq('media_id', me.media_id).eq('period_id', period.id).maybeSingle();
+  if (r.error) {
+    sumBadge('niedostępne'); setSStatus(sumMsg(r.error), true);
+    ['#ssave', '#sf', '#sd', '#sl'].forEach(s => { $(s).disabled = true; });
+    return;
+  }
+  const d = r.data;
+  S = {id: d ? d.id : null, files: d ? (d.files || []) : []};
+  $('#sd').value = d ? d.description : ''; $('#sl').value = d ? (d.links || []).join('\n') : '';
+  sumBadge(); renderSumFiles();
+  try {
+    const b = JSON.parse(localStorage.getItem(SLS()));
+    if (b && (b.d !== $('#sd').value || b.l !== $('#sl').value)) {
+      $('#sd').value = b.d; $('#sl').value = b.l; $('#sumbox').open = true;
+      setSStatus('Przywrócono niezapisany tekst. Kliknij „Zapisz podsumowanie”.');
+    }
+  } catch (e) {}
+}
+// forFiles: zapis potrzebny tylko po to, żeby istniał wiersz, do którego dopinamy screeny
+async function saveSummary(forFiles) {
+  const description = $('#sd').value.trim(), links = sumLinks();
+  if (!description && !links.length && !S.files.length && !forFiles) {
+    if (!S.id) { toast('Wpisz opis podsumowania.'); return false; }
+    if (!confirm('Pola są puste. Usunąć zapisane podsumowanie?')) return false;
+    const r = await sb.from('summaries').delete().eq('id', S.id).select('id');
+    if (r.error) { toast(sumSaveMsg(r.error)); return false; }
+    if (!r.data.length) { toast(sumSaveMsg({message: 'row-level policy'})); return false; }
+    S = {id: null, files: []}; try { localStorage.removeItem(SLS()); } catch (e) {}
+    sumBadge(); setSStatus('Podsumowanie usunięte.'); return true;
+  }
+  const btn = $('#ssave'); btn.disabled = true;
+  try {
+    const {data, error} = await sb.from('summaries').upsert(
+      {media_id: me.media_id, period_id: period.id, author_id: me.id, description, links, files: cleanFiles(), updated_at: new Date().toISOString()},
+      {onConflict: 'media_id,period_id'}).select('id').single();
+    if (error) { setSStatus(sumSaveMsg(error), true); toast(sumSaveMsg(error)); return false; }
+    S.id = data.id; try { localStorage.removeItem(SLS()); } catch (e) {}
+    sumBadge(); setSStatus('Zapisano ' + new Date().toLocaleTimeString('pl-PL', {hour: '2-digit', minute: '2-digit'}));
+    if (!forFiles) toast('Podsumowanie zapisane.');
+    return true;
+  } finally { btn.disabled = false; }
+}
+async function addSumFiles(list) {
+  if (!list.length || !(await saveSummary(true))) return;
+  let added = false;
+  for (const f of list) {
+    if (f.size > MAX_MB * 1048576) { toast(f.name + ' jest większy niż ' + MAX_MB + ' MB.'); continue; }
+    setSStatus('Wysyłanie: ' + f.name + '…');
+    const path = `${me.media_id}/summary/${period.id}/${Date.now()}_${f.name.replace(/[^\w.-]/g, '_')}`;
+    const up = await sb.storage.from('materials').upload(path, f, {contentType: f.type});
+    if (up.error) { toast('Błąd pliku ' + f.name + ': ' + up.error.message); continue; }
+    S.files.push({path, name: f.name, size: f.size}); added = true;
+  }
+  if (!added) return setSStatus('');
+  const {error} = await sb.from('summaries').update({files: cleanFiles(), updated_at: new Date().toISOString()}).eq('id', S.id);
+  if (error) return setSStatus('Nie udało się zapisać screenów: ' + sumSaveMsg(error), true);
+  renderSumFiles(); setSStatus('Screen dodany');
+}
+async function renderSumFiles() {
+  const box = $('#sfiles'), files = S.files;
+  const need = files.filter(f => !f.url).map(f => f.path);
+  if (need.length) {
+    const {data} = await sb.storage.from('materials').createSignedUrls(need, 3600);
+    (data || []).forEach(d => { const f = files.find(x => x.path === d.path); if (f) f.url = d.signedUrl; });
+  }
+  if (files !== S.files) return;
+  box.innerHTML = files.map((f, i) => `<div class="file"><img src="${esc(f.url || '')}" alt="${esc(f.name)}" data-i="${i}"><span>${esc(f.name)}</span><button data-rm="${i}" aria-label="Usuń plik ${esc(f.name)}">×</button></div>`).join('');
+  box.onclick = async e => {
+    const im = e.target.closest('img[data-i]'); if (im) return window.open(files[im.dataset.i].url, '_blank', 'noopener');
+    const b = e.target.closest('button[data-rm]'); if (!b) return;
+    const f = files[b.dataset.rm];
+    await sb.storage.from('materials').remove([f.path]);
+    S.files = S.files.filter(x => x.path !== f.path);
+    const {error} = await sb.from('summaries').update({files: cleanFiles(), updated_at: new Date().toISOString()}).eq('id', S.id);
+    if (error) toast(sumSaveMsg(error));
+    renderSumFiles();
   };
 }
 
@@ -672,16 +872,16 @@ async function showArchive() {
   const pr = await sb.from('periods').select('id,number,start_date,end_date').eq('status', 'published').order('number', {ascending: false}).limit(5);
   if (pr.error) return fail(pr.error.message);
   if (!pr.data.length) { $('#arc').innerHTML = '<div class="card"><h2>Brak opublikowanych wycen</h2><p class="mute">Kwoty pojawią się tu po opublikowaniu wyceny.</p></div>'; return; }
-  const mr = await sb.from('materials').select('id,title,period_id,submitted_at,valuations(amount,note)')
+  const mr = await sb.from('materials').select('id,title,period_id,submitted_at,valuations(amount)')
     .eq('media_id', me.media_id).eq('status', 'submitted').in('period_id', pr.data.map(p => p.id)).order('submitted_at');
   if (mr.error) return fail(mr.error.message);
   const t = todayPL();
   $('#arc').innerHTML = pr.data.map(p => {
     const list = mr.data.filter(m => m.period_id === p.id);
     const sum = list.reduce((a, m) => a + (valOf(m) ? Number(valOf(m).amount) : 0), 0);
-    const rows = list.map(m => { const v = valOf(m); return `<tr><td>${esc(m.title)}</td><td>${v ? esc(v.note) : ''}</td><td class="n">${v ? money(v.amount) : 'bez wyceny'}</td></tr>`; }).join('');
+    const rows = list.map(m => { const v = valOf(m); return `<tr><td>${esc(m.title)}</td><td class="n">${v ? money(v.amount) : 'bez wyceny'}</td></tr>`; }).join('');
     return `<section class="card mat"><div class="row"><h2>Okres ${p.number}</h2><span>${fmtDate(p.start_date)} – ${fmtDate(p.end_date)}${p.start_date <= t && t <= p.end_date ? ' <span class="badge cur">bieżący</span>' : ''}</span></div>` +
-      (list.length ? `<table class="t"><tr><th>Materiał</th><th>Za co</th><th class="n">Kwota</th></tr>${rows}<tr class="tot"><td colspan="2">Suma medium</td><td class="n">${money(sum)}</td></tr></table>` : '<p class="mute">W tym okresie nie wysłano materiałów.</p>') + '</section>';
+      (list.length ? `<table class="t"><tr><th>Materiał</th><th class="n">Kwota</th></tr>${rows}<tr class="tot"><td>Suma medium</td><td class="n">${money(sum)}</td></tr></table>` : '<p class="mute">W tym okresie nie wysłano materiałów.</p>') + '</section>';
   }).join('');
 }
 
