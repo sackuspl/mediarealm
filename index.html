@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wyceny mediów</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f4f5;--card:#fff;--ink:#14212b;--mute:#5d6b76;--line:#d9e0e4;--acc:#146c43;--accink:#fff;--amber:#f2c14e;--pbg:#14212b;--pink:#fff;--danger:#b3261e;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--bg:#0f151a;--card:#172028;--ink:#e8eef2;--mute:#9aa9b4;--line:#2a3742;--acc:#3fb37f;--accink:#08130e;--amber:#e0b13f;--pbg:#1f2e3a;--pink:#fff;--danger:#ff8a80;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'Schibsted Grotesk',system-ui,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:16px}
+h1,h2,h3{margin:0;line-height:1.2}
+.mute,small{color:var(--mute)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:4px 0 14px}
+label{display:block;font-weight:500;margin:14px 0 6px}
+input[type=text],input[type=email],input[type=password],textarea{width:100%;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+textarea{resize:vertical;min-height:90px}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px}
+button.pri{background:var(--acc);color:var(--accink);border-color:var(--acc);font-weight:700}
+button.ghost{background:none}
+button.danger{color:var(--danger)}
+button:disabled{opacity:.5;cursor:default}
+.period{background:var(--pbg);color:var(--pink);border-radius:10px;padding:20px 24px;margin-bottom:16px;border-left:8px solid var(--amber)}
+.period .big{font-size:clamp(28px,6vw,44px);font-weight:700;letter-spacing:-.02em}
+.period .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;align-items:baseline}
+.bar{height:6px;background:rgba(255,255,255,.2);border-radius:3px;margin-top:14px}
+.bar i{display:block;height:100%;background:var(--amber);border-radius:3px}
+.grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+ul.list{list-style:none;margin:10px 0 0;padding:0}
+ul.list button{width:100%;text-align:left;display:flex;justify-content:space-between;gap:10px;border:0;border-top:1px solid var(--line);border-radius:0;background:none;padding:10px 2px}
+ul.list li:first-child button{border-top:0}
+.files{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+.file{position:relative;width:96px;font-size:12px}
+.file img{width:96px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block;cursor:pointer}
+.file span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file button{position:absolute;top:2px;right:2px;padding:0 7px;line-height:20px;border-radius:10px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+#st{font-size:14px;color:var(--mute);margin-left:auto}
+#st.err{color:var(--danger)}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
+#toast.on{opacity:1}
+.login{max-width:380px;margin:12vh auto 0}
+.err-msg{color:var(--danger);min-height:1.4em;margin-top:10px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL = 'https://xtyoadjskoyvokfvjdkk.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_1FGR-fggxYUnZUOpX82SIA_JiPMuEMb';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const app = document.getElementById('app');
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const fmtDate = d => d.split('-').reverse().join('.');
+const fmtTime = t => new Date(t).toLocaleString('pl-PL', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+const days = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 864e5);
+const todayPL = () => new Date().toLocaleDateString('sv-SE', {timeZone: 'Europe/Warsaw'});
+const MAX_MB = 10;
+
+let me = null, period = null, cur = null, timer = null, saving = false, LS = '';
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 3500);
+}
+function setStatus(msg, err) { const s = $('#st'); if (s) { s.textContent = msg; s.className = err ? 'err' : ''; } }
+
+/* ---------- logowanie ---------- */
+function showLogin(msg) {
+  app.innerHTML = `<div class="card login">
+    <h1>Wyceny mediów</h1>
+    <p class="mute">Zaloguj się kontem od opiekuna mediów.</p>
+    <form id="lf">
+      <label for="em">E-mail</label><input id="em" type="email" autocomplete="username" required>
+      <label for="pw">Hasło</label><input id="pw" type="password" autocomplete="current-password" required>
+      <div class="actions"><button class="pri" type="submit">Zaloguj</button></div>
+      <div class="err-msg" id="le">${esc(msg || '')}</div>
+    </form></div>`;
+  $('#lf').onsubmit = async e => {
+    e.preventDefault();
+    const {error} = await sb.auth.signInWithPassword({email: $('#em').value.trim(), password: $('#pw').value});
+    if (error) { $('#le').textContent = 'Nieprawidłowy e-mail lub hasło.'; return; }
+    init();
+  };
+}
+async function logout() { await persistSafe(); await sb.auth.signOut(); cur = null; showLogin(); }
+
+/* ---------- aktywacja z linku ---------- */
+const inviteCode = new URLSearchParams(location.search).get('invite');
+const clearInviteUrl = () => history.replaceState(null, '', location.pathname);
+
+async function showInvite(code) {
+  const {data} = await sb.rpc('invite_info', {p_code: code});
+  const inv = data && data[0];
+  if (!inv) { clearInviteUrl(); return showLogin('Ten link aktywacyjny jest nieprawidłowy, został już użyty albo wygasł. Poproś opiekuna o nowy.'); }
+  app.innerHTML = `<div class="card login">
+    <h1>Aktywacja konta</h1>
+    <p class="mute">Zaproszenie: ${inv.role === 'leader' ? 'lider' : 'pomocnik'} medium <b>${esc(inv.media_name)}</b>. Ustaw własny e-mail i hasło, od teraz będziesz się nimi logować.</p>
+    <form id="af">
+      <label for="an">Imię lub nick</label><input id="an" type="text" required>
+      <label for="ae">E-mail</label><input id="ae" type="email" autocomplete="username" required>
+      <label for="ap">Hasło (min. 8 znaków)</label><input id="ap" type="password" autocomplete="new-password" minlength="8" required>
+      <div class="actions"><button class="pri" type="submit">Aktywuj konto</button></div>
+      <div class="err-msg" id="ae-msg"></div>
+    </form>
+    <p class="mute"><a href="${location.pathname}" id="haveacc">Mam już konto, chcę się zalogować</a></p></div>`;
+  const err = m => { $('#ae-msg').textContent = m; };
+  $('#af').onsubmit = async e => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button'); btn.disabled = true; err('');
+    const {data: d, error} = await sb.auth.signUp({email: $('#ae').value.trim(), password: $('#ap').value});
+    if (error) { btn.disabled = false; return err(/registered/i.test(error.message) ? 'Ten e-mail ma już konto. Zaloguj się nim i otwórz link jeszcze raz.' : error.message); }
+    if (!d.session) { btn.disabled = false; return err('Konto utworzone, ale wymaga potwierdzenia e-maila. Potwierdź e-mail i otwórz link jeszcze raz (albo poproś opiekuna o wyłączenie potwierdzania).'); }
+    const r = await sb.rpc('redeem_invite', {p_code: code, p_name: $('#an').value});
+    if (r.error) { btn.disabled = false; return err(r.error.message); }
+    clearInviteUrl(); init();
+  };
+}
+
+/* ---------- start ---------- */
+async function init() {
+  const {data: {session}} = await sb.auth.getSession();
+  if (!session) return inviteCode ? showInvite(inviteCode) : showLogin();
+  const {data: p, error} = await sb.from('profiles')
+    .select('id,display_name,role,media_id,media(name)').eq('id', session.user.id).maybeSingle();
+  if (error) { await sb.auth.signOut(); return showLogin('Błąd połączenia: ' + error.message); }
+  if (!p && inviteCode) {
+    const r = await sb.rpc('redeem_invite', {p_code: inviteCode, p_name: null});
+    if (!r.error) { clearInviteUrl(); return init(); }
+  }
+  if (!p) { await sb.auth.signOut(); return showLogin('To konto nie ma jeszcze przypisanej roli. Napisz do opiekuna mediów.'); }
+  me = p; LS = 'draft:' + me.id;
+  const {data: per} = await sb.from('periods').select('*').lte('start_date', todayPL()).gte('end_date', todayPL()).maybeSingle();
+  period = per;
+  if (me.role === 'admin') return showAdmin();
+  showApp();
+  let st = null; try { st = JSON.parse(localStorage.getItem(LS)); } catch (e) {}
+  if (st && st.id) await openMaterial(st.id, st);
+  else newMaterial(st);
+  loadLists();
+}
+
+function showAdmin() {
+  app.innerHTML = `<header class="top"><b>Administrator: ${esc(me.display_name)}</b><button class="ghost" id="out">Wyloguj</button></header>
+    <div class="card"><h2>Konto administratora działa</h2><p class="mute">Panel wycen pojawi się w następnym etapie.</p></div>`;
+  $('#out').onclick = logout;
+}
+
+/* ---------- widok medium ---------- */
+function showApp() {
+  let banner = '<section class="period"><div class="big">Brak aktywnego okresu</div></section>';
+  if (period) {
+    const total = days(period.start_date, period.end_date) + 1;
+    const left = days(todayPL(), period.end_date) + 1;
+    const pct = Math.min(100, Math.max(0, (total - left) / total * 100));
+    banner = `<section class="period">
+      <div class="row"><div class="big">Okres ${period.number}</div>
+      <div>${fmtDate(period.start_date)} – ${fmtDate(period.end_date)}</div></div>
+      <div class="row"><span>Wycena: ${fmtDate(period.end_date)}</span><span>${left === 1 ? 'ostatni dzień zbierania' : 'zostało ' + left + ' dni'}</span></div>
+      <div class="bar"><i style="width:${pct}%"></i></div></section>`;
+  }
+  app.innerHTML = `
+  <header class="top"><div><b>${esc(me.media.name)}</b> <span class="mute">${esc(me.display_name)}, ${me.role === 'leader' ? 'lider' : 'pomocnik'}</span></div>
+    <button class="ghost" id="out">Wyloguj</button></header>
+  ${banner}
+  <div class="grid">
+    <section class="card">
+      <h2 id="mode">Nowy materiał</h2>
+      <label for="ti">Tytuł</label><input id="ti" type="text" maxlength="200">
+      <label for="de">Opis</label><textarea id="de" placeholder="Co to jest, czego dotyczy, co zostało zrobione"></textarea>
+      <label for="li">Linki do screenów (jeden w linii)</label><textarea id="li" style="min-height:64px" placeholder="https://..."></textarea>
+      <label for="fi">Pliki ze screenami (obrazy do ${MAX_MB} MB; możesz też wkleić screena przez Ctrl+V)</label>
+      <input id="fi" type="file" accept="image/*" multiple>
+      <div class="files" id="files"></div>
+      <div class="actions">
+        <button class="pri" id="send">Wyślij do wyceny</button>
+        <button class="danger" id="del">Usuń</button>
+        <button class="ghost" id="new">Nowy materiał</button>
+        <span id="st" aria-live="polite"></span>
+      </div>
+    </section>
+    <aside class="card">
+      <h3>Moje szkice</h3><ul class="list" id="drafts"></ul>
+      <h3 style="margin-top:22px">Wysłane w tym okresie</h3><ul class="list" id="sent"></ul>
+    </aside>
+  </div>`;
+  $('#out').onclick = logout;
+  ['#ti', '#de', '#li'].forEach(s => $(s).addEventListener('input', onInput));
+  $('#fi').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
+  $('#send').onclick = submit;
+  $('#del').onclick = remove;
+  $('#new').onclick = async () => { await persistSafe(); lsClear(); newMaterial(); };
+  $('#drafts').onclick = $('#sent').onclick = async e => {
+    const b = e.target.closest('button[data-id]'); if (!b) return;
+    await persistSafe(); lsClear(); openMaterial(b.dataset.id);
+  };
+}
+
+async function loadLists() {
+  const {data} = await sb.from('materials').select('id,title,status,period_id,updated_at')
+    .eq('media_id', me.media_id).order('updated_at', {ascending: false});
+  const row = m => `<li><button data-id="${m.id}"><span>${esc(m.title || 'Bez tytułu')}</span><small>${fmtTime(m.updated_at)}</small></button></li>`;
+  const list = data || [];
+  const d = list.filter(m => m.status === 'draft');
+  const s = list.filter(m => m.status === 'submitted' && period && m.period_id === period.id);
+  $('#drafts').innerHTML = d.length ? d.map(row).join('') : '<li class="mute">Brak szkiców.</li>';
+  $('#sent').innerHTML = s.length ? s.map(row).join('') : '<li class="mute">Nic jeszcze nie wysłano.</li>';
+}
+
+/* ---------- edytowany materiał ---------- */
+function newMaterial(prefill) {
+  cur = {id: null, status: 'draft', title: '', description: '', links: [], files: []};
+  if (prefill) { cur.title = prefill.title || ''; cur.description = prefill.description || ''; cur.links = prefill.links || []; }
+  fill();
+}
+async function openMaterial(id, overlay) {
+  const {data, error} = await sb.from('materials')
+    .select('id,status,title,description,links,material_files(id,file_name,storage_path,size_bytes)').eq('id', id).maybeSingle();
+  if (error || !data) { lsClear(); return newMaterial(); }
+  cur = {id: data.id, status: data.status, title: data.title, description: data.description,
+         links: data.links || [], files: data.material_files || []};
+  if (overlay && cur.status === 'draft') {
+    cur.title = overlay.title ?? cur.title; cur.description = overlay.description ?? cur.description; cur.links = overlay.links ?? cur.links;
+  }
+  fill();
+}
+function fill() {
+  $('#ti').value = cur.title; $('#de').value = cur.description; $('#li').value = cur.links.join('\n');
+  const draft = cur.status === 'draft';
+  $('#mode').textContent = draft ? (cur.id ? 'Szkic' : 'Nowy materiał') : 'Edycja wysłanego materiału';
+  $('#send').textContent = draft ? 'Wyślij do wyceny' : 'Zapisz zmiany';
+  $('#del').textContent = draft ? 'Usuń szkic' : 'Usuń materiał';
+  $('#del').style.display = cur.id ? '' : 'none';
+  setStatus(draft ? 'Szkic zapisuje się automatycznie' : '');
+  renderFiles();
+}
+function collect() {
+  cur.title = $('#ti').value; cur.description = $('#de').value;
+  cur.links = $('#li').value.split('\n').map(x => x.trim()).filter(Boolean);
+}
+
+/* ---------- autozapis ---------- */
+function lsSave() { try { localStorage.setItem(LS, JSON.stringify({id: cur.id, title: cur.title, description: cur.description, links: cur.links})); } catch (e) {} }
+function lsClear() { try { localStorage.removeItem(LS); } catch (e) {} }
+function onInput() {
+  collect();
+  if (cur.status !== 'draft') return;
+  lsSave();
+  setStatus('Niezapisane zmiany…');
+  clearTimeout(timer); timer = setTimeout(persist, 1200);
+}
+async function persist(force) {
+  clearTimeout(timer);
+  while (saving) await sleep(60);
+  saving = true;
+  try { await doSave(force); } finally { saving = false; }
+}
+const persistSafe = async () => { if (cur && cur.status === 'draft') { collect(); await persist(); } };
+async function doSave(force) {
+  collect();
+  if (cur.status !== 'draft') return;
+  const empty = !cur.title.trim() && !cur.description.trim() && !cur.links.length;
+  if (!cur.id && empty && !force) return;
+  const row = {title: cur.title, description: cur.description, links: cur.links};
+  let error;
+  if (!cur.id) {
+    const r = await sb.from('materials').insert({...row, media_id: me.media_id, author_id: me.id, status: 'draft'}).select('id').single();
+    error = r.error; if (!error) cur.id = r.data.id;
+  } else {
+    error = (await sb.from('materials').update(row).eq('id', cur.id)).error;
+  }
+  if (error) return setStatus('Nie udało się zapisać (' + error.message + '). Treść jest bezpieczna w tej przeglądarce.', true);
+  lsSave(); setStatus('Szkic zapisany ' + new Date().toLocaleTimeString('pl-PL', {hour: '2-digit', minute: '2-digit'}));
+  $('#mode').textContent = 'Szkic'; $('#del').style.display = '';
+  loadLists();
+}
+
+/* ---------- pliki ---------- */
+async function addFiles(list) {
+  if (!list.length) return;
+  if (cur.status === 'draft') await persist(true);
+  if (!cur.id) return toast('Nie udało się utworzyć szkicu.');
+  for (const f of list) {
+    if (f.size > MAX_MB * 1048576) { toast(f.name + ' jest większy niż ' + MAX_MB + ' MB.'); continue; }
+    setStatus('Wysyłanie: ' + f.name + '…');
+    const path = `${me.media_id}/${cur.id}/${Date.now()}_${f.name.replace(/[^\w.-]/g, '_')}`;
+    const up = await sb.storage.from('materials').upload(path, f, {contentType: f.type});
+    if (up.error) { toast('Błąd pliku ' + f.name + ': ' + up.error.message); continue; }
+    const r = await sb.from('material_files').insert({material_id: cur.id, media_id: me.media_id, storage_path: path, file_name: f.name, size_bytes: f.size})
+      .select('id,file_name,storage_path,size_bytes').single();
+    if (r.error) { toast('Błąd zapisu pliku: ' + r.error.message); continue; }
+    cur.files.push(r.data); renderFiles();
+  }
+  setStatus('Plik dodany');
+}
+async function renderFiles() {
+  const box = $('#files');
+  const files = cur.files;
+  const need = files.filter(f => !f.url).map(f => f.storage_path);
+  if (need.length) {
+    const {data} = await sb.storage.from('materials').createSignedUrls(need, 3600);
+    (data || []).forEach(d => { const f = files.find(x => x.storage_path === d.path); if (f) f.url = d.signedUrl; });
+  }
+  if (files !== cur.files) return;
+  box.innerHTML = files.map((f, i) => `<div class="file"><img src="${esc(f.url || '')}" alt="${esc(f.file_name)}" data-i="${i}"><span>${esc(f.file_name)}</span><button data-rm="${i}" aria-label="Usuń plik ${esc(f.file_name)}">×</button></div>`).join('');
+  box.onclick = async e => {
+    const im = e.target.closest('img[data-i]'); if (im) return window.open(files[im.dataset.i].url, '_blank');
+    const b = e.target.closest('button[data-rm]'); if (!b) return;
+    const f = files[b.dataset.rm];
+    await sb.storage.from('materials').remove([f.storage_path]);
+    await sb.from('material_files').delete().eq('id', f.id);
+    cur.files = cur.files.filter(x => x.id !== f.id); renderFiles();
+  };
+}
+document.addEventListener('paste', e => {
+  if (!cur || !e.clipboardData) return;
+  const imgs = [...e.clipboardData.files].filter(f => f.type.startsWith('image/'));
+  if (imgs.length) { e.preventDefault(); addFiles(imgs); }
+});
+document.addEventListener('visibilitychange', () => { if (document.hidden) persistSafe(); });
+
+/* ---------- wysyłka i usuwanie ---------- */
+async function submit() {
+  collect();
+  if (!cur.title.trim()) return toast('Dodaj tytuł.');
+  if (!cur.links.length && !cur.files.length) return toast('Dodaj screen albo link.');
+  $('#send').disabled = true;
+  try {
+    if (cur.status === 'draft') {
+      await persist(true);
+      const {error} = await sb.from('materials').update({status: 'submitted'}).eq('id', cur.id);
+      if (error) return toast('Nie udało się wysłać: ' + error.message);
+      lsClear(); toast('Wysłano do wyceny.'); newMaterial();
+    } else {
+      const {data, error} = await sb.from('materials')
+        .update({title: cur.title, description: cur.description, links: cur.links}).eq('id', cur.id).select('id');
+      if (error) return toast('Nie udało się zapisać: ' + error.message);
+      if (!data.length) return toast('Ten materiał jest już zamknięty, bo okres się skończył.');
+      toast('Zapisano zmiany.');
+    }
+    loadLists();
+  } finally { $('#send').disabled = false; }
+}
+async function remove() {
+  if (!cur.id || !confirm('Usunąć ten materiał razem z plikami? Nie da się tego cofnąć.')) return;
+  await persist();
+  const paths = cur.files.map(f => f.storage_path);
+  if (paths.length) await sb.storage.from('materials').remove(paths);
+  const {error} = await sb.from('materials').delete().eq('id', cur.id);
+  if (error) return toast('Nie udało się usunąć: ' + error.message);
+  lsClear(); toast('Usunięto.'); newMaterial(); loadLists();
+}
+
+init();
+</script>
+</body>
+</html>
