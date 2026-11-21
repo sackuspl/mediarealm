@@ -317,7 +317,7 @@ async function init() {
 /* ---------- panel admina ---------- */
 const A = {periods: [], media: [], pid: null, mid: '', mats: [], urls: {}};
 const PST = {open: 'otwarty', closed: 'zamknięty', published: 'opublikowany'};
-const money = n => Number(n).toLocaleString('pl-PL', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const money = n => Number(n).toLocaleString('pl-PL', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' $';
 const safeUrl = u => /^https?:\/\//i.test(u) ? u : null;
 const valOf = m => Array.isArray(m.valuations) ? m.valuations[0] : m.valuations;
 const curPeriod = () => A.periods.find(p => p.id === A.pid);
@@ -398,7 +398,7 @@ function renderMats() {
       ${links ? `<div class="links" style="margin-top:10px">${links}</div>` : ''}
       ${files ? `<div class="files">${files}</div>` : ''}
       <div class="val">
-        <div><label>Kwota</label><input type="text" inputmode="decimal" aria-label="Kwota" data-amt value="${v.amount != null ? String(v.amount).replace('.', ',') : ''}"></div>
+        <div><label>Kwota ($)</label><input type="text" inputmode="decimal" aria-label="Kwota w dolarach" data-amt value="${v.amount != null ? String(v.amount).replace('.', ',') : ''}"></div>
         <div><label>Za co</label><input type="text" aria-label="Za co" data-note maxlength="300" value="${esc(v.note || '')}"></div>
         <button class="pri" data-act="save" data-id="${m.id}">Zapisz wycenę</button>
       </div></article>`;
