@@ -47,6 +47,19 @@ ul.list li:first-child button{border-top:0}
 #toast.on{opacity:1}
 .login{max-width:380px;margin:12vh auto 0}
 .err-msg{color:var(--danger);min-height:1.4em;margin-top:10px}
+
+select,input[type=date],input[type=number]{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;max-width:100%}
+select{width:100%}
+.badge{font-size:13px;padding:2px 10px;border-radius:10px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
+.badge.ok{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+.mat{margin-top:16px}.mat h3{font-size:19px}.mat .row{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.mat p{white-space:pre-wrap;margin:10px 0 0}.mat .links a{display:block;overflow-wrap:anywhere}
+.val{display:grid;grid-template-columns:130px minmax(0,1fr) auto;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);align-items:end}
+.val label{margin:0 0 4px;font-size:14px}.val input{width:100%}
+@media(max-width:700px){.val{grid-template-columns:1fr}}
+table.t{width:100%;border-collapse:collapse;margin-top:10px}.t td,.t th{text-align:left;padding:7px 4px;border-top:1px solid var(--line);font-size:15px}.t .n{text-align:right;font-variant-numeric:tabular-nums}.t tr.tot td{font-weight:700}
+.copyrow{display:flex;gap:8px;margin-top:12px}.copyrow input{flex:1;min-width:0}
+.formrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 </style>
 </head>
 <body>
@@ -157,10 +170,187 @@ async function init() {
   loadLists();
 }
 
-function showAdmin() {
+/* ---------- panel admina ---------- */
+const A = {periods: [], media: [], pid: null, mid: '', mats: [], urls: {}};
+const PST = {open: 'otwarty', closed: 'zamknięty', published: 'opublikowany'};
+const money = n => Number(n).toLocaleString('pl-PL', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const safeUrl = u => /^https?:\/\//i.test(u) ? u : null;
+const valOf = m => Array.isArray(m.valuations) ? m.valuations[0] : m.valuations;
+const curPeriod = () => A.periods.find(p => p.id === A.pid);
+
+async function showAdmin() {
   app.innerHTML = `<header class="top"><b>Administrator: ${esc(me.display_name)}</b><button class="ghost" id="out">Wyloguj</button></header>
-    <div class="card"><h2>Konto administratora działa</h2><p class="mute">Panel wycen pojawi się w następnym etapie.</p></div>`;
-  $('#out').onclick = logout;
+    <section class="card" id="pcard">Ładowanie…</section>
+    <section class="card" id="sums" style="margin-top:16px"></section>
+    <div id="mats"></div>
+    <section class="card" id="inv" style="margin-top:16px"></section>`;
+  $('#out').onclick = logout; app.onclick = adminClick; app.onchange = adminChange;
+  const [pr, mr] = await Promise.all([
+    sb.from('periods').select('*').lte('start_date', todayPL()).order('number', {ascending: false}),
+    sb.from('media').select('id,name,slug').order('name')]);
+  if (pr.error || mr.error) { $('#pcard').textContent = 'Nie udało się wczytać danych: ' + (pr.error || mr.error).message + '. Odśwież stronę.'; return; }
+  A.periods = pr.data; A.media = mr.data;
+  const t = todayPL();
+  A.pid = (A.periods.find(p => p.end_date < t && p.status !== 'published') || A.periods[0] || {}).id;
+  renderPeriod(); renderInvForm(); await loadMats(); loadInvites();
+}
+
+function renderPeriod() {
+  const p = curPeriod();
+  if (!p) { $('#pcard').innerHTML = '<p class="mute">Brak okresów.</p>'; return; }
+  const opts = A.periods.map(x => `<option value="${x.id}"${x.id === A.pid ? ' selected' : ''}>Okres ${x.number}: ${fmtDate(x.start_date)} – ${fmtDate(x.end_date)} (${PST[x.status]})</option>`).join('');
+  const mopts = A.media.map(m => `<option value="${m.id}"${m.id === A.mid ? ' selected' : ''}>${esc(m.name)}</option>`).join('');
+  const acts = p.status === 'open' ? '<button data-act="close">Zamknij okres</button><button class="pri" data-act="publish">Opublikuj wycenę</button>'
+    : p.status === 'closed' ? '<button data-act="reopen">Otwórz ponownie</button><button class="pri" data-act="publish">Opublikuj wycenę</button>'
+    : '<button data-act="unpublish">Cofnij publikację</button>';
+  $('#pcard').innerHTML = `<h2>Wyceny</h2>
+    <label for="psel">Okres</label><select id="psel">${opts}</select>
+    <label for="msel">Pokaż materiały medium</label><select id="msel"><option value="">Wszystkie media</option>${mopts}</select>
+    <div class="actions">${acts}</div>
+    <label for="dl">Termin podsumowania (tylko informacja)</label>
+    <div class="actions" style="margin-top:0"><input id="dl" type="date" value="${p.valuation_deadline}"><button data-act="deadline">Zapisz termin</button></div>`;
+}
+
+async function setPeriodStatus(status, okMsg) {
+  const p = curPeriod();
+  const {error} = await sb.from('periods').update({status, published_at: status === 'published' ? new Date().toISOString() : null}).eq('id', p.id);
+  if (error) return toast('Nie udało się zmienić okresu: ' + error.message);
+  p.status = status; renderPeriod(); toast(okMsg);
+}
+
+async function loadMats() {
+  $('#mats').innerHTML = '<p class="mute">Ładowanie materiałów…</p>';
+  const {data, error} = await sb.from('materials')
+    .select('id,media_id,title,description,links,submitted_at,media(name),author:profiles!author_id(display_name),material_files(file_name,storage_path),valuations(amount,note)')
+    .eq('period_id', A.pid).eq('status', 'submitted').order('submitted_at');
+  if (error) { $('#mats').innerHTML = `<p class="err-msg">Nie udało się wczytać materiałów: ${esc(error.message)}</p>`; return; }
+  A.mats = data;
+  const paths = data.flatMap(m => m.material_files.map(f => f.storage_path));
+  A.urls = {};
+  if (paths.length) {
+    const r = await sb.storage.from('materials').createSignedUrls(paths, 3600);
+    (r.data || []).forEach(d => { if (d.signedUrl) A.urls[d.path] = d.signedUrl; });
+  }
+  renderMats(); renderSums();
+}
+
+function badge(m) { const v = valOf(m); return v ? `<span class="badge ok">wyceniony: ${money(v.amount)}</span>` : '<span class="badge">niewyceniony</span>'; }
+
+function renderMats() {
+  const list = A.mats.filter(m => !A.mid || m.media_id === A.mid);
+  if (!list.length) { $('#mats').innerHTML = '<div class="card mat"><p class="mute">Brak wysłanych materiałów w tym okresie.</p></div>'; return; }
+  $('#mats').innerHTML = list.map(m => {
+    const v = valOf(m) || {};
+    const links = (m.links || []).map(u => safeUrl(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>` : `<span>${esc(u)}</span>`).join('');
+    const files = m.material_files.map(f => `<div class="file"><img src="${esc(A.urls[f.storage_path] || '')}" data-url="${esc(A.urls[f.storage_path] || '')}" alt="${esc(f.file_name)}"><span>${esc(f.file_name)}</span></div>`).join('');
+    return `<article class="card mat" data-card="${m.id}">
+      <div class="row"><h3>${esc(m.title)}</h3><span data-badge>${badge(m)}</span></div>
+      <small>${esc(m.media.name)} · ${esc(m.author ? m.author.display_name : '?')} · wysłano ${fmtTime(m.submitted_at)}</small>
+      ${m.description ? `<p>${esc(m.description)}</p>` : ''}
+      ${links ? `<div class="links" style="margin-top:10px">${links}</div>` : ''}
+      ${files ? `<div class="files">${files}</div>` : ''}
+      <div class="val">
+        <div><label>Kwota</label><input type="text" inputmode="decimal" data-amt value="${v.amount != null ? String(v.amount).replace('.', ',') : ''}"></div>
+        <div><label>Za co</label><input type="text" data-note maxlength="300" value="${esc(v.note || '')}"></div>
+        <button class="pri" data-act="save" data-id="${m.id}">Zapisz wycenę</button>
+      </div></article>`;
+  }).join('');
+}
+
+function renderSums() {
+  const by = {}; let un = 0;
+  A.mats.forEach(m => {
+    const r = by[m.media.name] = by[m.media.name] || {n: 0, sum: 0, un: 0};
+    r.n++; const v = valOf(m);
+    if (v) r.sum += Number(v.amount); else { r.un++; un++; }
+  });
+  const rows = Object.keys(by).sort().map(k => `<tr><td>${esc(k)}</td><td class="n">${by[k].n}</td><td class="n">${by[k].un}</td><td class="n">${money(by[k].sum)}</td></tr>`).join('');
+  const total = Object.values(by).reduce((a, r) => a + r.sum, 0);
+  $('#sums').innerHTML = `<h2>Sumy okresu</h2>` + (rows
+    ? `<table class="t"><tr><th>Medium</th><th class="n">Materiały</th><th class="n">Bez wyceny</th><th class="n">Suma</th></tr>${rows}<tr class="tot"><td>Razem</td><td class="n">${A.mats.length}</td><td class="n">${un}</td><td class="n">${money(total)}</td></tr></table>`
+    : '<p class="mute">Brak materiałów do podsumowania.</p>');
+}
+
+async function saveValuation(id, card) {
+  const raw = card.querySelector('[data-amt]').value.trim().replace(/\s/g, '').replace(',', '.');
+  const amount = Number(raw);
+  if (!raw || !isFinite(amount) || amount < 0) return toast('Wpisz kwotę jako liczbę, np. 1500 albo 1500,50.');
+  const note = card.querySelector('[data-note]').value.trim();
+  const {error} = await sb.from('valuations').upsert({material_id: id, amount, note, valued_by: me.id, valued_at: new Date().toISOString()}, {onConflict: 'material_id'});
+  if (error) return toast('Nie udało się zapisać wyceny: ' + error.message);
+  const m = A.mats.find(x => x.id === id); m.valuations = {amount, note};
+  card.querySelector('[data-badge]').innerHTML = badge(m); renderSums(); toast('Wycena zapisana.');
+}
+
+async function adminChange(e) {
+  if (e.target.id === 'psel') { A.pid = e.target.value; renderPeriod(); await loadMats(); }
+  if (e.target.id === 'msel') { A.mid = e.target.value; renderMats(); }
+}
+
+async function adminClick(e) {
+  const img = e.target.closest('img[data-url]');
+  if (img && img.dataset.url) return window.open(img.dataset.url, '_blank', 'noopener');
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const act = b.dataset.act, p = curPeriod();
+  if (act === 'save') return saveValuation(b.dataset.id, b.closest('[data-card]'));
+  if (act === 'close') { if (confirm('Zamknąć okres ' + p.number + '? Media nie będą mogły już edytować jego materiałów.')) setPeriodStatus('closed', 'Okres zamknięty.'); }
+  if (act === 'reopen') setPeriodStatus('open', 'Okres otwarty ponownie.');
+  if (act === 'unpublish') { if (confirm('Cofnąć publikację? Media przestaną widzieć kwoty z okresu ' + p.number + '.')) setPeriodStatus('closed', 'Publikacja cofnięta.'); }
+  if (act === 'publish') {
+    const un = A.mats.filter(m => !valOf(m)).length;
+    if (confirm('Opublikować wyceny okresu ' + p.number + '? Media zobaczą swoje kwoty.' + (un ? '\n\nUwaga: ' + un + ' materiałów nie ma jeszcze wyceny.' : ''))) setPeriodStatus('published', 'Wycena opublikowana.');
+  }
+  if (act === 'deadline') {
+    const d = $('#dl').value; if (!d) return toast('Wybierz datę.');
+    const {error} = await sb.from('periods').update({valuation_deadline: d}).eq('id', p.id);
+    if (error) return toast('Nie udało się zapisać terminu: ' + error.message);
+    p.valuation_deadline = d; toast('Termin zapisany.');
+  }
+  if (act === 'invite') return createInvite();
+  if (act === 'copy') { const i = $('#invlink'); i.select(); try { await navigator.clipboard.writeText(i.value); toast('Link skopiowany.'); } catch (x) { toast('Zaznaczyłem link, skopiuj go przez Ctrl+C.'); } }
+  if (act === 'revoke') {
+    const {error} = await sb.from('invites').update({expires_at: new Date().toISOString()}).eq('code', b.dataset.code).is('used_at', null);
+    if (error) return toast('Nie udało się unieważnić: ' + error.message);
+    toast('Zaproszenie unieważnione.'); loadInvites();
+  }
+}
+
+/* ---------- zaproszenia ---------- */
+function renderInvForm() {
+  $('#inv').innerHTML = `<h2>Zaproszenia</h2>
+    <p class="mute">Jednorazowy link, którym lider albo pomocnik zakłada swoje konto.</p>
+    <div class="formrow">
+      <div><label for="ir">Rola</label><select id="ir"><option value="leader">Lider</option><option value="helper">Pomocnik</option></select></div>
+      <div><label for="im">Medium</label><select id="im">${A.media.map(m => `<option value="${esc(m.slug)}">${esc(m.name)}</option>`).join('')}</select></div>
+      <div><label for="in">Notatka (dla kogo)</label><input id="in" type="text" maxlength="80"></div>
+      <div><label for="id">Ważny dni</label><input id="id" type="number" min="1" max="60" value="7"></div>
+    </div>
+    <div class="actions"><button class="pri" data-act="invite">Utwórz zaproszenie</button></div>
+    <div id="invout"></div><div id="invlist"></div>`;
+}
+
+async function createInvite() {
+  const days = parseInt($('#id').value, 10);
+  const {data, error} = await sb.rpc('create_invite', {p_role: $('#ir').value, p_media_slug: $('#im').value, p_note: $('#in').value.trim(), p_days: days > 0 ? days : 7});
+  if (error) return toast('Nie udało się utworzyć zaproszenia: ' + error.message);
+  const link = location.origin + location.pathname + '?invite=' + data;
+  $('#invout').innerHTML = `<div class="copyrow"><input id="invlink" type="text" readonly value="${esc(link)}"><button class="pri" data-act="copy">Kopiuj link</button></div>`;
+  $('#in').value = ''; loadInvites();
+}
+
+async function loadInvites() {
+  const {data, error} = await sb.from('invites')
+    .select('code,role,note,created_at,expires_at,used_at,media(name),user:profiles!used_by(display_name)').order('created_at', {ascending: false}).limit(30);
+  const box = $('#invlist'); if (!box) return;
+  if (error) { box.innerHTML = `<p class="err-msg">Nie udało się wczytać zaproszeń: ${esc(error.message)}</p>`; return; }
+  const now = Date.now();
+  const row = i => {
+    const used = !!i.used_at, dead = !used && i.expires_at && new Date(i.expires_at) < now;
+    const st = used ? 'użyte przez ' + esc(i.user ? i.user.display_name : '?') : dead ? 'wygasło' : 'ważne';
+    const act = !used && !dead ? `<button class="ghost danger" data-act="revoke" data-code="${esc(i.code)}">Unieważnij</button>` : '';
+    return `<tr><td>${esc(i.media.name)}</td><td>${i.role === 'leader' ? 'lider' : 'pomocnik'}</td><td>${esc(i.note)}</td><td>${st}</td><td>${act}</td></tr>`;
+  };
+  box.innerHTML = data.length ? `<table class="t"><tr><th>Medium</th><th>Rola</th><th>Notatka</th><th>Stan</th><th></th></tr>${data.map(row).join('')}</table>` : '<p class="mute">Brak zaproszeń.</p>';
 }
 
 /* ---------- widok medium ---------- */
