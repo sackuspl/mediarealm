@@ -165,6 +165,13 @@ table.t{width:100%;border-collapse:collapse;margin-top:12px}
 .logoin .av{width:44px;height:44px;border-radius:14px}
 .hint{display:block;margin-top:6px;font-size:13px}
 
+/* dzwonek powiadomienia przy zakładce Wyceny: płynnie wjeżdża i znika */
+#arch{display:inline-flex;align-items:center}
+.bell{position:relative;display:inline-grid;place-items:center;width:0;height:20px;margin-right:0;opacity:0;transform:scale(.5);color:var(--acc);transition:width .45s cubic-bezier(.22,1,.36,1),margin .45s cubic-bezier(.22,1,.36,1),opacity .35s ease,transform .5s cubic-bezier(.22,1,.36,1)}
+.bell.on{width:20px;margin-right:7px;opacity:1;transform:none}
+.bell svg{width:18px;height:18px}
+.bell b{position:absolute;top:-7px;right:-9px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:var(--danger);color:#fff;font-size:11px;font-weight:700;line-height:16px;text-align:center;box-shadow:0 0 0 2px #fff}
+
 /* podsumowanie okresu (widok medium) */
 .col{display:grid;gap:20px;min-width:0}
 details.card.sumbox{padding:0}
@@ -356,7 +363,7 @@ async function init() {
     if (!r.error) { clearInviteUrl(); return init(); }
   }
   if (!p) { await sb.auth.signOut(); return showLogin('To konto nie ma jeszcze przypisanej roli. Napisz do opiekuna mediów.'); }
-  me = p; LS = 'draft:' + me.id;
+  me = p; me.joined = session.user.created_at || null; LS = 'draft:' + me.id;
   const {data: per} = await sb.from('periods').select('*').lte('start_date', todayPL()).gte('end_date', todayPL()).maybeSingle();
   period = per;
   if (me.role === 'admin') return showAdmin();
@@ -420,6 +427,7 @@ async function setPeriodStatus(status, okMsg) {
   const p = curPeriod();
   const {error} = await sb.from('periods').update({status, published_at: status === 'published' ? new Date().toISOString() : null}).eq('id', p.id);
   if (error) return toast('Nie udało się zmienić okresu: ' + error.message);
+  if (status === 'published' || p.status === 'published') await sb.from('valuation_seen').delete().eq('period_id', p.id);
   p.status = status; renderPeriod(); toast(okMsg);
 }
 
@@ -745,7 +753,7 @@ function showApp() {
   }
   app.innerHTML = `
   <header class="top"><div class="brand">${avHtml(me.media)}<div><b>${esc(me.media.name)}</b><small>${esc(me.display_name)}, ${me.role === 'leader' ? 'lider' : 'pomocnik'}</small></div></div>
-    <nav><button class="ghost" id="arch">Archiwum</button><button class="ghost" id="out">Wyloguj</button></nav></header>
+    <nav><button class="ghost" id="arch" aria-label="Wyceny"><span class="bell" id="bell" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><b id="bcount">0</b></span>Wyceny</button><button class="ghost" id="out">Wyloguj</button></nav></header>
   ${banner}
   <div class="grid">
     <div class="col">
@@ -772,7 +780,9 @@ function showApp() {
     </aside>
   </div>`;
   $('#out').onclick = logout;
-  $('#arch').onclick = async () => { await persistSafe(); showArchive(); };
+  $('#arch').onclick = async () => { markSeen(); await persistSafe(); showArchive(); };
+  $('#arch').addEventListener('mouseenter', markSeen);
+  $('#arch').addEventListener('focus', markSeen);
   ['#ti', '#de', '#li'].forEach(s => $(s).addEventListener('input', onInput));
   $('#fi').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
   $('#send').onclick = submit;
@@ -783,6 +793,7 @@ function showApp() {
     await persistSafe(); lsClear(); openMaterial(b.dataset.id);
   };
   if (period) initSummary();
+  loadNotif();
 }
 
 /* ---------- podsumowanie okresu (opcjonalne, jedno na medium w okresie) ---------- */
@@ -920,9 +931,40 @@ async function loadLists() {
   $('#sent').innerHTML = s.length ? s.map(row).join('') : '<li class="mute">Nic jeszcze nie wysłano.</li>';
 }
 
+/* ---------- powiadomienia o nowych wycenach (osobno dla każdego konta) ---------- */
+// NT.ids: okresy z nową, jeszcze nieprzeczytaną przez to konto wyceną; NT.fresh: te, które były nowe przy otwarciu strony
+const NT = {ids: [], fresh: new Set()};
+function setBell(n) {
+  const b = $('#bell'); if (!b) return;
+  b.classList.toggle('on', n > 0); $('#bcount').textContent = n > 9 ? '9+' : n;
+  $('#arch').setAttribute('aria-label', n ? 'Wyceny, nowe: ' + n : 'Wyceny');
+}
+async function loadNotif() {
+  try {
+    const pr = await sb.from('periods').select('id,number,published_at').eq('status', 'published').order('number', {ascending: false}).limit(5);
+    if (pr.error || !pr.data.length) return;
+    const ids = pr.data.map(x => x.id);
+    const [mr, sr] = await Promise.all([
+      sb.from('materials').select('period_id,valuations(amount)').eq('media_id', me.media_id).eq('status', 'submitted').in('period_id', ids),
+      sb.from('valuation_seen').select('period_id').eq('user_id', me.id).in('period_id', ids)]);
+    if (mr.error || sr.error) return; // bez tabeli powiadomień strona działa jak dotąd, tylko bez dzwonka
+    const seen = new Set(sr.data.map(x => String(x.period_id)));
+    const valued = new Set(mr.data.filter(m => valOf(m)).map(m => String(m.period_id)));
+    const joined = me.joined ? Date.parse(me.joined) : 0;
+    NT.ids = pr.data.filter(x => valued.has(String(x.id)) && !seen.has(String(x.id)) && !(x.published_at && Date.parse(x.published_at) < joined)).map(x => x.id);
+    NT.ids.forEach(id => NT.fresh.add(String(id)));
+    setBell(NT.ids.length);
+  } catch (e) {}
+}
+async function markSeen() {
+  if (!NT.ids.length) return;
+  const ids = NT.ids; NT.ids = []; setBell(0);
+  await sb.from('valuation_seen').upsert(ids.map(id => ({user_id: me.id, period_id: id})), {onConflict: 'user_id,period_id', ignoreDuplicates: true});
+}
+
 /* ---------- archiwum medium (ostatnie 5 opublikowanych okresów) ---------- */
 async function showArchive() {
-  app.innerHTML = `<header class="top"><div class="brand">${avHtml(me.media)}<div><b>Archiwum wycen</b><small>${esc(me.media.name)}</small></div></div><nav><button class="ghost" id="back">Wróć do materiałów</button><button class="ghost" id="out">Wyloguj</button></nav></header>
+  app.innerHTML = `<header class="top"><div class="brand">${avHtml(me.media)}<div><b>Wyceny</b><small>${esc(me.media.name)}</small></div></div><nav><button class="ghost" id="back">Wróć do materiałów</button><button class="ghost" id="out">Wyloguj</button></nav></header>
     <div id="arc"><p class="mute">Ładowanie…</p></div>`;
   $('#out').onclick = logout; $('#back').onclick = () => init();
   const fail = m => { $('#arc').innerHTML = `<div class="card"><p class="err-msg">Nie udało się wczytać archiwum: ${esc(m)}. Odśwież stronę.</p></div>`; };
@@ -937,7 +979,7 @@ async function showArchive() {
     const list = mr.data.filter(m => m.period_id === p.id);
     const sum = list.reduce((a, m) => a + (valOf(m) ? Number(valOf(m).amount) : 0), 0);
     const rows = list.map(m => { const v = valOf(m); return `<tr><td>${esc(m.title)}</td><td class="n">${v ? money(v.amount) : 'bez wyceny'}</td></tr>`; }).join('');
-    return `<section class="card mat"><div class="row"><h2>Okres ${p.number}</h2><span>${fmtDate(p.start_date)} – ${fmtDate(p.end_date)}${p.start_date <= t && t <= p.end_date ? ' <span class="badge cur">bieżący</span>' : ''}</span></div>` +
+    return `<section class="card mat"><div class="row"><h2>Okres ${p.number}</h2><span>${fmtDate(p.start_date)} – ${fmtDate(p.end_date)}${p.start_date <= t && t <= p.end_date ? ' <span class="badge cur">bieżący</span>' : ''}${NT.fresh.has(String(p.id)) ? ' <span class="badge ok">nowa wycena</span>' : ''}</span></div>` +
       (list.length ? `<table class="t"><tr><th>Materiał</th><th class="n">Kwota</th></tr>${rows}<tr class="tot"><td>Suma medium</td><td class="n">${money(sum)}</td></tr></table>` : '<p class="mute">W tym okresie nie wysłano materiałów.</p>') + '</section>';
   }).join('');
 }
