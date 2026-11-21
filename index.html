@@ -38,6 +38,8 @@ small{font-size:14px}
 /* zastępnik logo: inicjały na kolorowym kafelku (dla mediów bez logo) */
 .av.ini{display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;letter-spacing:.02em;line-height:1;background:var(--ini,#3b4556);text-shadow:0 1px 2px rgba(0,0,0,.28)}
 .av.sm{width:22px;height:22px;border-radius:7px;font-size:10px;box-shadow:none}
+/* ikonka logowania (zamiast logo mediów) */
+.av.ico{display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#2a5ee8 0%,#1d4ed8 55%,#17369c 100%);box-shadow:0 10px 22px -12px rgba(29,78,216,.75),inset 0 1px 0 rgba(255,255,255,.22)}
 /* kilka logo obok siebie (nagłówek panelu, logowanie) */
 .stack{display:flex;gap:6px;flex:none}
 .stack .av{box-shadow:0 4px 10px -6px rgba(15,26,43,.55)}
@@ -72,7 +74,7 @@ button:disabled{opacity:.5;cursor:default}
 /* logowanie i aktywacja */
 .login{max-width:420px;margin:9vh auto 0;padding:32px;position:relative;isolation:isolate;overflow:hidden}
 .login::before{content:"";position:absolute;z-index:-1;right:-70px;top:-70px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(29,78,216,.14),rgba(29,78,216,0) 70%)}
-.login .av{width:44px;height:44px;border-radius:14px;margin-bottom:20px}
+.login .av{width:48px;height:48px;border-radius:15px;margin-bottom:20px}
 .login .av.ini{font-size:17px}
 .login .stack{gap:10px;margin-bottom:20px}
 .login .stack .av{width:48px;height:48px;border-radius:15px;margin-bottom:0}
@@ -180,14 +182,39 @@ ul.tips li+li{margin-top:4px}
 .sumbody>small{display:block;margin-top:12px}
 @media(max-width:520px){.sumbox>summary{padding:16px 18px}.sumbody{padding:2px 18px 18px}}
 
-/* panel admina: grupy według mediów i podsumowania */
-#mats{display:grid;gap:28px}
-.grp{display:grid;gap:16px}
-.grp .mat+.mat{margin-top:0}
-.ghead{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
-.ghead .badge{margin-left:auto}
-.sumv{border-left:4px solid var(--acc)}
-.sumv.none{border:1px dashed #c5cedb;border-radius:12px;padding:12px 16px;color:var(--mute);font-size:15px}
+/* panel admina: zwijane kategorie mediów i materiały */
+#mats{display:grid;gap:14px}
+.mtools{display:flex;justify-content:flex-end;margin-bottom:-4px}
+.grp{padding:0;overflow:hidden}
+.ghead,.mhead{width:100%;display:flex;align-items:center;gap:12px;text-align:left;background:none;border:0;border-radius:0;font-weight:inherit;color:inherit}
+.ghead{padding:16px 20px;border-bottom:1px solid transparent;transition:background-color .25s,border-color .4s}
+.mhead{padding:13px 16px;transition:background-color .25s}
+.ghead:hover:not(:disabled),.mhead:hover:not(:disabled){background:var(--soft);border-color:transparent}
+.grp.open>.ghead{border-bottom-color:var(--line)}
+.ghead .av{flex:none}
+.gt,.mt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.gt b{font-size:18px;font-weight:600;letter-spacing:-.01em}
+.mt b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gt small,.mt small{color:var(--mute);font-size:14px}
+.ghead .badge,.mhead .badge{flex:none}
+.chev{flex:none;width:9px;height:9px;margin:0 4px 0 2px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:translateY(-3px) rotate(45deg);transition:transform .5s cubic-bezier(.22,1,.36,1)}
+.open>.ghead .chev,.open>.mhead .chev{transform:translateY(3px) rotate(225deg)}
+/* płynne rozwijanie: wysokość liczy przeglądarka (0fr -> 1fr), bez stałych wartości */
+.collapse{display:grid;grid-template-rows:0fr;transition:grid-template-rows .5s cubic-bezier(.22,1,.36,1)}
+.open>.collapse{grid-template-rows:1fr}
+.cwrap{min-height:0;overflow:hidden;opacity:0;visibility:hidden;transition:opacity .3s ease,visibility 0s linear .5s}
+.open>.collapse>.cwrap{opacity:1;visibility:visible;transition:opacity .45s ease .08s,visibility 0s}
+.cin{display:grid;gap:12px;padding:16px 20px 20px}
+.cin>p{margin:0}
+.cin .files{margin-top:0}
+.cin .val{margin-top:4px}
+.mitem{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden;transition:border-color .3s,box-shadow .4s}
+.mitem.open{border-color:#cfd7e2;box-shadow:0 10px 24px -16px rgba(15,26,43,.3)}
+.mitem .cin{padding:4px 16px 16px}
+.sumv{border-left:4px solid var(--acc);background:var(--soft);border-radius:12px;padding:16px 18px}
+.sumv .row h3{font-size:16px}
+.sumv.none{border:1px dashed #c5cedb;border-left-width:1px;background:none;padding:12px 16px;color:var(--mute);font-size:15px}
+@media(max-width:520px){.ghead{padding:14px}.mhead{padding:12px}.cin{padding:12px 14px 16px}.ghead .av{width:30px;height:30px;border-radius:10px}.ghead .badge{display:none}}
 
 /* tło strony: delikatne kształty i wejście elementów */
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(520px 360px at 6% -4%,rgba(29,78,216,.09),transparent 70%),radial-gradient(560px 420px at 104% 102%,rgba(107,155,255,.12),transparent 70%)}
@@ -265,7 +292,7 @@ function setStatus(msg, err) { const s = $('#st'); if (s) { s.textContent = msg;
 /* ---------- logowanie ---------- */
 function showLogin(msg) {
   app.innerHTML = `<div class="card login">
-    ${stackHtml(LOGIN_LOGOS)}
+    <span class="av ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 15v2"/></svg></span>
     <h1>Wyceny mediów</h1>
     <form id="lf">
       <label for="em">Login</label><input id="em" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
@@ -341,7 +368,7 @@ async function init() {
 }
 
 /* ---------- panel admina ---------- */
-const A = {periods: [], media: [], pid: null, mid: '', mats: [], urls: {}, sums: {}, sumErr: ''};
+const A = {periods: [], media: [], pid: null, mid: '', mats: [], urls: {}, sums: {}, sumErr: '', open: new Set()};
 const SUM_HINT = 'Podsumowania nie działają, bo baza nie ma jeszcze tabeli. Uruchom plik podsumowania.sql w Supabase (SQL Editor).';
 const sumMsg = e => /relation|does not exist|schema cache|Could not find|permission denied|summaries/i.test(e.message || '') ? SUM_HINT : e.message;
 const sumSaveMsg = e => /row-level|policy/i.test(e.message || '') ? 'Nie można zapisać podsumowania: okres jest już zamknięty albo brak uprawnień.' : sumMsg(e);
@@ -423,55 +450,82 @@ async function loadMats() {
 function badge(m) { const v = valOf(m); return v ? `<span class="badge ok">wyceniony: ${money(v.amount)}</span>` : '<span class="badge warn">niewyceniony</span>'; }
 
 const plMat = n => n === 1 ? 'materiał' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)) ? 'materiały' : 'materiałów';
-const grpTotal = mid => {
-  const ms = A.mats.filter(m => String(m.media_id) === String(mid));
-  const sum = ms.reduce((a, m) => a + (valOf(m) ? Number(valOf(m).amount) : 0), 0);
-  const un = ms.filter(m => !valOf(m)).length;
-  return 'suma: ' + money(sum) + (un ? ' · bez wyceny: ' + un : '');
+const grpMs = mid => A.mats.filter(m => String(m.media_id) === String(mid));
+const grpTotal = mid => 'suma: ' + money(grpMs(mid).reduce((a, m) => a + (valOf(m) ? Number(valOf(m).amount) : 0), 0));
+const grpMeta = mid => {
+  const ms = grpMs(mid), un = ms.filter(m => !valOf(m)).length;
+  return ms.length + ' ' + plMat(ms.length) + (un ? ' · bez wyceny: ' + un : '') + (A.sums[String(mid)] ? ' · jest podsumowanie' : '');
 };
 const linkList = arr => (arr || []).map(u => safeUrl(u) ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(u)}</a>` : `<span>${esc(u)}</span>`).join('');
 const thumb = (url, name) => `<div class="file"><img src="${esc(url)}" data-url="${esc(url)}" alt="${esc(name)}"><span>${esc(name)}</span></div>`;
 
-// podsumowanie medium: pokazywane na samej górze wyceny danego medium
+// podsumowanie medium: zawsze na samej górze rozwiniętej grupy danego medium
 function sumView(mid) {
   const s = A.sums[String(mid)];
   if (!s) return '<div class="sumv none">Medium nie dodało podsumowania (jest opcjonalne).</div>';
   const links = linkList(s.links), files = (s.files || []).map(f => thumb(A.urls[f.path] || '', f.name)).join('');
-  return `<article class="card mat sumv">
+  return `<article class="mat sumv">
     <div class="row"><h3>Podsumowanie medium</h3><span>${s.author ? esc(s.author.display_name) + ', ' : ''}zapisano ${fmtTime(s.updated_at)}</span></div>
     ${s.description ? `<p>${esc(s.description)}</p>` : ''}
-    ${links ? `<div class="links" style="margin-top:10px">${links}</div>` : ''}
+    ${links ? `<div class="links">${links}</div>` : ''}
     ${files ? `<div class="files">${files}</div>` : ''}</article>`;
 }
 
+// zwijany materiał: w nagłówku tytuł i status wyceny, po rozwinięciu szczegóły i pole kwoty
 function matCard(m) {
-  const v = valOf(m) || {};
+  const v = valOf(m) || {}, key = 'm:' + m.id, open = A.open.has(key);
   const links = linkList(m.links);
   const files = m.material_files.map(f => thumb(A.urls[f.storage_path] || '', f.file_name)).join('');
-  return `<article class="card mat" data-card="${m.id}">
-      <div class="row"><h3>${esc(m.title)}</h3><span data-badge>${badge(m)}</span></div>
-      <div class="meta"><span>${esc(m.author ? m.author.display_name : '?')}</span><span>wysłano ${fmtTime(m.submitted_at)}</span></div>
+  return `<article class="mat mitem${open ? ' open' : ''}" data-key="${esc(key)}" data-card="${m.id}">
+    <button class="mhead" data-tg aria-expanded="${open}"><span class="mt"><b>${esc(m.title)}</b><small>${esc(m.author ? m.author.display_name : '?')} · wysłano ${fmtTime(m.submitted_at)}</small></span><span data-badge>${badge(m)}</span><i class="chev"></i></button>
+    <div class="collapse"><div class="cwrap"><div class="cin">
       ${m.description ? `<p>${esc(m.description)}</p>` : ''}
-      ${links ? `<div class="links" style="margin-top:10px">${links}</div>` : ''}
+      ${links ? `<div class="links">${links}</div>` : ''}
       ${files ? `<div class="files">${files}</div>` : ''}
       <div class="val">
         <div><label>Kwota ($)</label><input type="text" inputmode="decimal" aria-label="Kwota w dolarach" data-amt value="${v.amount != null ? String(v.amount).replace('.', ',') : ''}"></div>
         <button class="pri" data-act="save" data-id="${m.id}">Zapisz wycenę</button>
-      </div></article>`;
+      </div>
+    </div></div></div></article>`;
 }
 
-// każde medium to osobna grupa: nagłówek, na górze jego podsumowanie, niżej jego materiały z kwotami
+// zwijana kategoria medium: tylko jego podsumowanie i jego materiały
+function grpHtml(g) {
+  const key = 'g:' + g.med.id, open = A.open.has(key);
+  return `<section class="card grp${open ? ' open' : ''}" data-key="${esc(key)}" data-media="${esc(g.med.id)}">
+    <button class="ghead" data-tg aria-expanded="${open}">${avHtml(g.med)}<span class="gt"><b>${esc(g.med.name)}</b><small data-gmeta>${grpMeta(g.med.id)}</small></span><span class="badge cur" data-gsum>${grpTotal(g.med.id)}</span><i class="chev"></i></button>
+    <div class="collapse"><div class="cwrap"><div class="cin">
+      ${sumView(g.med.id)}
+      ${g.ms.length ? g.ms.map(matCard).join('') : '<p class="mute">Brak wysłanych materiałów.</p>'}
+    </div></div></div></section>`;
+}
+
 function renderMats() {
   const note = A.sumErr ? `<p class="err-msg">${esc(A.sumErr)}</p>` : '';
   const groups = A.media.filter(x => !A.mid || String(x.id) === String(A.mid))
-    .map(med => ({med, ms: A.mats.filter(m => String(m.media_id) === String(med.id))}))
+    .map(med => ({med, ms: grpMs(med.id)}))
     .filter(g => A.mid || g.ms.length || A.sums[String(g.med.id)]);
   if (!groups.length) { $('#mats').innerHTML = note + '<div class="card mat"><p class="mute">Brak wysłanych materiałów w tym okresie.</p></div>'; return; }
-  $('#mats').innerHTML = note + groups.map(g => `<section class="grp" data-media="${esc(g.med.id)}">
-    <div class="ghead">${avHtml(g.med)}<h2>${esc(g.med.name)}</h2><span class="mute">${g.ms.length} ${plMat(g.ms.length)}</span><span class="badge cur" data-gsum>${grpTotal(g.med.id)}</span></div>
-    ${sumView(g.med.id)}
-    ${g.ms.length ? g.ms.map(matCard).join('') : '<div class="card mat"><p class="mute">Brak wysłanych materiałów.</p></div>'}
-  </section>`).join('');
+  const tools = groups.length > 1 ? '<div class="mtools"><button class="ghost" id="tall" data-act="toggleall"></button></div>' : '';
+  $('#mats').innerHTML = note + tools + groups.map(grpHtml).join('');
+  syncToolbar();
+}
+
+const grpEls = () => [...document.querySelectorAll('#mats .grp')];
+function syncToolbar() {
+  const b = $('#tall'); if (!b) return;
+  b.textContent = grpEls().every(g => g.classList.contains('open')) ? 'Zwiń media' : 'Rozwiń media';
+}
+// klasa .open uruchamia płynne przejście w CSS; stan zapamiętujemy, żeby przetrwał filtrowanie
+function setOpen(el, open) {
+  el.classList.toggle('open', open);
+  el.firstElementChild.setAttribute('aria-expanded', open);
+  if (open) A.open.add(el.dataset.key); else A.open.delete(el.dataset.key);
+}
+function toggleKey(el) { setOpen(el, !el.classList.contains('open')); syncToolbar(); }
+function toggleAll() {
+  const gs = grpEls(), openAll = !gs.every(g => g.classList.contains('open'));
+  gs.forEach(g => setOpen(g, openAll)); syncToolbar();
 }
 
 function renderSums() {
@@ -496,20 +550,23 @@ async function saveValuation(id, card) {
   if (error) return toast('Nie udało się zapisać wyceny: ' + error.message);
   const m = A.mats.find(x => x.id === id); m.valuations = {amount};
   card.querySelector('[data-badge]').innerHTML = badge(m); renderSums();
-  const grp = card.closest('.grp'), gb = grp && grp.querySelector('[data-gsum]'); if (gb) gb.textContent = grpTotal(m.media_id);
+  const grp = card.closest('.grp'), gb = grp && grp.querySelector('[data-gsum]'), gm = grp && grp.querySelector('[data-gmeta]');
+  if (gb) gb.textContent = grpTotal(m.media_id); if (gm) gm.textContent = grpMeta(m.media_id);
   toast('Wycena zapisana.');
 }
 
 async function adminChange(e) {
-  if (e.target.id === 'psel') { A.pid = e.target.value; renderPeriod(); await loadMats(); }
-  if (e.target.id === 'msel') { A.mid = e.target.value; renderMats(); }
+  if (e.target.id === 'psel') { A.pid = e.target.value; A.open = new Set(); renderPeriod(); await loadMats(); }
+  if (e.target.id === 'msel') { A.mid = e.target.value; if (A.mid) A.open.add('g:' + A.mid); renderMats(); }
 }
 
 async function adminClick(e) {
+  const tg = e.target.closest('[data-tg]'); if (tg) return toggleKey(tg.parentElement);
   const img = e.target.closest('img[data-url]');
   if (img && img.dataset.url) return window.open(img.dataset.url, '_blank', 'noopener');
   const b = e.target.closest('button[data-act]'); if (!b) return;
   const act = b.dataset.act, p = curPeriod();
+  if (act === 'toggleall') return toggleAll();
   if (act === 'save') return saveValuation(b.dataset.id, b.closest('[data-card]'));
   if (act === 'close') { if (confirm('Zamknąć okres ' + p.number + '? Media nie będą mogły już edytować jego materiałów.')) setPeriodStatus('closed', 'Okres zamknięty.'); }
   if (act === 'reopen') setPeriodStatus('open', 'Okres otwarty ponownie.');
