@@ -220,7 +220,7 @@ async function showInvite(code) {
     const btn = e.target.querySelector('button'); btn.disabled = true; err('');
     const {data: d, error} = await sb.auth.signUp({email: loginToEmail(login), password: $('#ap').value});
     if (error) { btn.disabled = false; return err(/registered/i.test(error.message) ? 'Ten login jest już zajęty. Wybierz inny.' : 'Nie udało się założyć konta: ' + error.message); }
-    if (!d.session) { btn.disabled = false; return err('Konto utworzone, ale Supabase wymaga potwierdzenia. Daj znać opiekunowi mediów.'); }
+    if (!d.session) { btn.disabled = false; return err('Konto utworzone, ale wymaga potwierdzenia. Daj znać opiekunowi mediów.'); }
     const r = await sb.rpc('redeem_invite', {p_code: code, p_name: login});
     if (r.error) { btn.disabled = false; return err(r.error.message); }
     clearInviteUrl(); init();
@@ -540,7 +540,7 @@ function fill() {
   $('#send').textContent = draft ? 'Wyślij do wyceny' : 'Zapisz zmiany';
   $('#del').textContent = draft ? 'Usuń szkic' : 'Usuń materiał';
   $('#del').style.display = cur.id ? '' : 'none';
-  setStatus(draft ? 'Szkic zapisuje się automatycznie' : '');
+  setStatus('');
   renderFiles();
 }
 function collect() {
