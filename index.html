@@ -178,7 +178,6 @@ function showLogin(msg) {
   app.innerHTML = `<div class="card login">
     <i class="logo"></i>
     <h1>Wyceny mediów</h1>
-    <p class="mute">Zaloguj się loginem i hasłem od opiekuna mediów.</p>
     <form id="lf">
       <label for="em">Login</label><input id="em" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
       <label for="pw">Hasło</label><input id="pw" type="password" autocomplete="current-password" required>
@@ -205,14 +204,14 @@ async function showInvite(code) {
   app.innerHTML = `<div class="card login">
     <i class="logo"></i>
     <h1>Aktywacja konta</h1>
-    <p class="mute">Zaproszenie: ${inv.role === 'leader' ? 'lider' : 'pomocnik'} medium <b>${esc(inv.media_name)}</b>. Wymyśl własny login i hasło. Login będzie też Twoją nazwą widoczną na stronie.</p>
+    <p class="mute">${inv.role === 'leader' ? 'Lider' : 'Pomocnik'} medium <b>${esc(inv.media_name)}</b></p>
     <form id="af">
-      <label for="ae">Login (małe litery, cyfry, kropka, myślnik, podkreślnik; 3–30 znaków)</label><input id="ae" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30" required>
-      <label for="ap">Hasło (min. 8 znaków)</label><input id="ap" type="password" autocomplete="new-password" minlength="8" required>
+      <label for="ae">Login</label><input id="ae" type="text" placeholder="3–30 znaków" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30" required>
+      <label for="ap">Hasło</label><input id="ap" type="password" placeholder="min. 8 znaków" autocomplete="new-password" minlength="8" required>
       <div class="actions"><button class="pri" type="submit">Aktywuj konto</button></div>
       <div class="err-msg" id="ae-msg"></div>
     </form>
-    <p class="mute"><a href="${location.pathname}" id="haveacc">Mam już konto, chcę się zalogować</a></p></div>`;
+    <p class="mute"><a href="${location.pathname}" id="haveacc">Mam już konto, zaloguj się</a></p></div>`;
   const err = m => { $('#ae-msg').textContent = m; };
   $('#af').onsubmit = async e => {
     e.preventDefault();
@@ -288,7 +287,7 @@ function renderPeriod() {
     <div class="formrow">
       <div><label for="psel">Okres</label><select id="psel">${opts}</select></div>
       <div><label for="msel">Medium</label><select id="msel"><option value="">Wszystkie media</option>${mopts}</select></div>
-      <div><label for="dl">Termin podsumowania (informacyjny)</label><div class="inline"><input id="dl" type="date" value="${p.valuation_deadline}"><button data-act="deadline">Zapisz termin</button></div></div>
+      <div><label for="dl">Termin podsumowania</label><div class="inline"><input id="dl" type="date" value="${p.valuation_deadline}"><button data-act="deadline">Zapisz termin</button></div></div>
     </div>`;
 }
 
@@ -399,11 +398,10 @@ async function adminClick(e) {
 /* ---------- zaproszenia ---------- */
 function renderInvForm() {
   $('#inv').innerHTML = `<h2>Zaproszenia</h2>
-    <p class="mute">Jednorazowy link, którym lider albo pomocnik zakłada swoje konto.</p>
     <div class="formrow">
       <div><label for="ir">Rola</label><select id="ir"><option value="leader">Lider</option><option value="helper">Pomocnik</option></select></div>
       <div><label for="im">Medium</label><select id="im">${A.media.map(m => `<option value="${esc(m.slug)}">${esc(m.name)}</option>`).join('')}</select></div>
-      <div><label for="in">Notatka (dla kogo)</label><input id="in" type="text" maxlength="80"></div>
+      <div><label for="in">Notatka</label><input id="in" type="text" maxlength="80"></div>
       <div><label for="id">Ważny dni</label><input id="id" type="number" min="1" max="60" value="7"></div>
     </div>
     <div class="actions"><button class="pri" data-act="invite">Utwórz zaproszenie</button></div>
@@ -444,7 +442,7 @@ function showApp() {
     banner = `<section class="period">
       <div class="row"><div class="big">Okres ${period.number}</div>
       <span class="chip">${fmtDate(period.start_date)} – ${fmtDate(period.end_date)}</span></div>
-      <div class="stats"><div><small>Wycena</small><b>${fmtDate(period.end_date)}</b></div><div><small>Do końca okresu</small><b>${left === 1 ? 'ostatni dzień' : left + ' dni'}</b></div></div>
+      <div class="stats"><div><small>Wycena</small><b>${fmtDate(period.valuation_deadline || period.end_date)}</b></div><div><small>Do końca okresu</small><b>${left === 1 ? 'ostatni dzień' : left + ' dni'}</b></div></div>
       <div class="bar"><i style="width:${pct}%"></i></div></section>`;
   }
   app.innerHTML = `
@@ -455,9 +453,9 @@ function showApp() {
     <section class="card">
       <h2 id="mode">Nowy materiał</h2>
       <label for="ti">Tytuł</label><input id="ti" type="text" maxlength="200">
-      <label for="de">Opis</label><textarea id="de" placeholder="Co to jest, czego dotyczy, co zostało zrobione"></textarea>
-      <label for="li">Linki do screenów (jeden w linii)</label><textarea id="li" style="min-height:64px" placeholder="https://..."></textarea>
-      <label for="fi">Pliki ze screenami (obrazy do ${MAX_MB} MB; możesz też wkleić screena przez Ctrl+V)</label>
+      <label for="de">Opis</label><textarea id="de"></textarea>
+      <label for="li">Linki do screenów</label><textarea id="li" style="min-height:64px" placeholder="https://... (każdy w nowej linii)"></textarea>
+      <label for="fi">Screeny (do ${MAX_MB} MB)</label>
       <input id="fi" type="file" accept="image/*" multiple>
       <div class="files" id="files"></div>
       <div class="actions">
@@ -504,7 +502,7 @@ async function showArchive() {
   const fail = m => { $('#arc').innerHTML = `<div class="card"><p class="err-msg">Nie udało się wczytać archiwum: ${esc(m)}. Odśwież stronę.</p></div>`; };
   const pr = await sb.from('periods').select('id,number,start_date,end_date').eq('status', 'published').order('number', {ascending: false}).limit(5);
   if (pr.error) return fail(pr.error.message);
-  if (!pr.data.length) { $('#arc').innerHTML = '<div class="card"><h2>Brak opublikowanych wycen</h2><p class="mute">Kwoty pojawią się tu, gdy opiekun mediów opublikuje wycenę okresu. Archiwum pokazuje ostatnie 5 opublikowanych okresów.</p></div>'; return; }
+  if (!pr.data.length) { $('#arc').innerHTML = '<div class="card"><h2>Brak opublikowanych wycen</h2><p class="mute">Kwoty pojawią się tu po opublikowaniu wyceny.</p></div>'; return; }
   const mr = await sb.from('materials').select('id,title,period_id,submitted_at,valuations(amount,note)')
     .eq('media_id', me.media_id).eq('status', 'submitted').in('period_id', pr.data.map(p => p.id)).order('submitted_at');
   if (mr.error) return fail(mr.error.message);
@@ -566,7 +564,7 @@ async function persist(force) {
   saving = true;
   try { await doSave(force); } finally { saving = false; }
 }
-const persistSafe = async () => { if (cur && cur.status === 'draft') { collect(); await persist(); } };
+const persistSafe = async () => { if (cur && cur.status === 'draft' && $('#ti')) { collect(); await persist(); } };
 async function doSave(force) {
   collect();
   if (cur.status !== 'draft') return;
@@ -624,7 +622,7 @@ async function renderFiles() {
   };
 }
 document.addEventListener('paste', e => {
-  if (!cur || !e.clipboardData) return;
+  if (!cur || !$('#ti') || !e.clipboardData) return;
   const imgs = [...e.clipboardData.files].filter(f => f.type.startsWith('image/'));
   if (imgs.length) { e.preventDefault(); addFiles(imgs); }
 });
