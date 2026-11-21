@@ -223,7 +223,8 @@ async function showInvite(code) {
     if (error) { btn.disabled = false; return err(/registered/i.test(error.message) ? 'Ten login jest już zajęty. Wybierz inny.' : 'Nie udało się założyć konta: ' + error.message); }
     if (!d.session) { btn.disabled = false; return err('Konto utworzone, ale Supabase wymaga potwierdzenia. Daj znać opiekunowi mediów.'); }
     const r = await sb.rpc('redeem_invite', {p_code: code, p_name: login});
-    if (r.error) { btn.disabled = false; return err(r.error.message); }
+    // Konto już istnieje – zostawiamy kod w adresie, init() po odświeżeniu dokończy przypisanie.
+    if (r.error) return err('Konto utworzone, ale nie udało się przypisać zaproszenia (' + r.error.message + '). Odśwież stronę, aby dokończyć aktywację.');
     clearInviteUrl(); init();
   };
 }
@@ -444,7 +445,7 @@ function showApp() {
     banner = `<section class="period">
       <div class="row"><div class="big">Okres ${period.number}</div>
       <span class="chip">${fmtDate(period.start_date)} – ${fmtDate(period.end_date)}</span></div>
-      <div class="stats"><div><small>Wycena</small><b>${fmtDate(period.end_date)}</b></div><div><small>Do końca okresu</small><b>${left === 1 ? 'ostatni dzień' : left + ' dni'}</b></div></div>
+      <div class="stats"><div><small>Wycena</small><b>${fmtDate(period.valuation_deadline || period.end_date)}</b></div><div><small>Do końca okresu</small><b>${left === 1 ? 'ostatni dzień' : left + ' dni'}</b></div></div>
       <div class="bar"><i style="width:${pct}%"></i></div></section>`;
   }
   app.innerHTML = `
@@ -566,7 +567,8 @@ async function persist(force) {
   saving = true;
   try { await doSave(force); } finally { saving = false; }
 }
-const persistSafe = async () => { if (cur && cur.status === 'draft') { collect(); await persist(); } };
+// Zapis tylko gdy formularz materiału jest na ekranie (np. nie w Archiwum).
+const persistSafe = async () => { if (cur && cur.status === 'draft' && $('#ti')) { collect(); await persist(); } };
 async function doSave(force) {
   collect();
   if (cur.status !== 'draft') return;
@@ -618,13 +620,15 @@ async function renderFiles() {
     const im = e.target.closest('img[data-i]'); if (im) return window.open(files[im.dataset.i].url, '_blank');
     const b = e.target.closest('button[data-rm]'); if (!b) return;
     const f = files[b.dataset.rm];
-    await sb.storage.from('materials').remove([f.storage_path]);
-    await sb.from('material_files').delete().eq('id', f.id);
+    const rm = await sb.storage.from('materials').remove([f.storage_path]);
+    if (rm.error) return toast('Nie udało się usunąć pliku: ' + rm.error.message);
+    const del = await sb.from('material_files').delete().eq('id', f.id);
+    if (del.error) return toast('Nie udało się usunąć pliku: ' + del.error.message);
     cur.files = cur.files.filter(x => x.id !== f.id); renderFiles();
   };
 }
 document.addEventListener('paste', e => {
-  if (!cur || !e.clipboardData) return;
+  if (!cur || !e.clipboardData || !$('#fi')) return;
   const imgs = [...e.clipboardData.files].filter(f => f.type.startsWith('image/'));
   if (imgs.length) { e.preventDefault(); addFiles(imgs); }
 });
