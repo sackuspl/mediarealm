@@ -368,7 +368,7 @@ function showApp() {
   }
   app.innerHTML = `
   <header class="top"><div><b>${esc(me.media.name)}</b> <span class="mute">${esc(me.display_name)}, ${me.role === 'leader' ? 'lider' : 'pomocnik'}</span></div>
-    <button class="ghost" id="out">Wyloguj</button></header>
+    <span><button class="ghost" id="arch">Archiwum</button> <button class="ghost" id="out">Wyloguj</button></span></header>
   ${banner}
   <div class="grid">
     <section class="card">
@@ -392,6 +392,7 @@ function showApp() {
     </aside>
   </div>`;
   $('#out').onclick = logout;
+  $('#arch').onclick = async () => { await persistSafe(); showArchive(); };
   ['#ti', '#de', '#li'].forEach(s => $(s).addEventListener('input', onInput));
   $('#fi').onchange = e => { addFiles([...e.target.files]); e.target.value = ''; };
   $('#send').onclick = submit;
@@ -412,6 +413,28 @@ async function loadLists() {
   const s = list.filter(m => m.status === 'submitted' && period && m.period_id === period.id);
   $('#drafts').innerHTML = d.length ? d.map(row).join('') : '<li class="mute">Brak szkiców.</li>';
   $('#sent').innerHTML = s.length ? s.map(row).join('') : '<li class="mute">Nic jeszcze nie wysłano.</li>';
+}
+
+/* ---------- archiwum medium (ostatnie 5 opublikowanych okresów) ---------- */
+async function showArchive() {
+  app.innerHTML = `<header class="top"><b>Archiwum wycen: ${esc(me.media.name)}</b><span><button class="ghost" id="back">Wróć do materiałów</button> <button class="ghost" id="out">Wyloguj</button></span></header>
+    <div id="arc"><p class="mute">Ładowanie…</p></div>`;
+  $('#out').onclick = logout; $('#back').onclick = () => init();
+  const fail = m => { $('#arc').innerHTML = `<div class="card"><p class="err-msg">Nie udało się wczytać archiwum: ${esc(m)}. Odśwież stronę.</p></div>`; };
+  const pr = await sb.from('periods').select('id,number,start_date,end_date').eq('status', 'published').order('number', {ascending: false}).limit(5);
+  if (pr.error) return fail(pr.error.message);
+  if (!pr.data.length) { $('#arc').innerHTML = '<div class="card"><h2>Brak opublikowanych wycen</h2><p class="mute">Kwoty pojawią się tu, gdy opiekun mediów opublikuje wycenę okresu. Archiwum pokazuje ostatnie 5 opublikowanych okresów.</p></div>'; return; }
+  const mr = await sb.from('materials').select('id,title,period_id,submitted_at,valuations(amount,note)')
+    .eq('media_id', me.media_id).eq('status', 'submitted').in('period_id', pr.data.map(p => p.id)).order('submitted_at');
+  if (mr.error) return fail(mr.error.message);
+  const t = todayPL();
+  $('#arc').innerHTML = pr.data.map(p => {
+    const list = mr.data.filter(m => m.period_id === p.id);
+    const sum = list.reduce((a, m) => a + (valOf(m) ? Number(valOf(m).amount) : 0), 0);
+    const rows = list.map(m => { const v = valOf(m); return `<tr><td>${esc(m.title)}</td><td>${v ? esc(v.note) : ''}</td><td class="n">${v ? money(v.amount) : 'bez wyceny'}</td></tr>`; }).join('');
+    return `<section class="card mat"><div class="row"><h2>Okres ${p.number}</h2><span>${fmtDate(p.start_date)} – ${fmtDate(p.end_date)}${p.start_date <= t && t <= p.end_date ? ' <span class="badge">bieżący</span>' : ''}</span></div>` +
+      (list.length ? `<table class="t"><tr><th>Materiał</th><th>Za co</th><th class="n">Kwota</th></tr>${rows}<tr class="tot"><td colspan="2">Suma medium</td><td class="n">${money(sum)}</td></tr></table>` : '<p class="mute">W tym okresie nie wysłano materiałów.</p>') + '</section>';
+  }).join('');
 }
 
 /* ---------- edytowany materiał ---------- */
