@@ -4,62 +4,141 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wyceny mediów</title>
+<meta name="theme-color" content="#f3f5f8">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='7' fill='%231d4ed8'/%3E%3Cpath fill='white' d='M12 4.5l1.8 5.7 5.7 1.8-5.7 1.8L12 19.5l-1.8-5.7L4.5 12l5.7-1.8z'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f2f4f5;--card:#fff;--ink:#14212b;--mute:#5d6b76;--line:#d9e0e4;--acc:#146c43;--accink:#fff;--amber:#f2c14e;--pbg:#14212b;--pink:#fff;--danger:#b3261e;color-scheme:light}
-@media(prefers-color-scheme:dark){:root{--bg:#0f151a;--card:#172028;--ink:#e8eef2;--mute:#9aa9b4;--line:#2a3742;--acc:#3fb37f;--accink:#08130e;--amber:#e0b13f;--pbg:#1f2e3a;--pink:#fff;--danger:#ff8a80;color-scheme:dark}}
+:root{--bg:#f3f5f8;--card:#fff;--soft:#f6f8fb;--ink:#0f1a2b;--mute:#5f6b7c;--line:#e4e9f0;--acc:#1d4ed8;--acc-h:#1a43b8;--acc-soft:#e8eeff;--ok:#146c3b;--ok-soft:#e3f5ea;--warn:#8a5a00;--warn-soft:#fff3d6;--danger:#b3261e;--danger-soft:#fdecea;--dark:#15171c;color-scheme:light}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'Schibsted Grotesk',system-ui,sans-serif}
-main{max-width:1060px;margin:0 auto;padding:16px}
-h1,h2,h3{margin:0;line-height:1.2}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'Schibsted Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:1120px;margin:0 auto;padding:16px 16px 56px}
+@media(min-width:720px){main{padding:24px 32px 72px}}
+#app>*+*{margin-top:20px}
+h1,h2,h3{margin:0;line-height:1.2;letter-spacing:-.02em;font-weight:600}
+h1{font-size:28px}h2{font-size:20px}h3{font-size:17px}
+a{color:var(--acc);text-underline-offset:3px}
 .mute,small{color:var(--mute)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:4px 0 14px}
-label{display:block;font-weight:500;margin:14px 0 6px}
-input[type=text],input[type=email],input[type=password],textarea{width:100%;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
-textarea{resize:vertical;min-height:90px}
+small{font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px}
+@media(max-width:520px){.card{padding:18px}}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px}
-button.pri{background:var(--acc);color:var(--accink);border-color:var(--acc);font-weight:700}
-button.ghost{background:none}
+
+/* pasek górny */
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;position:sticky;top:10px;z-index:5;background:rgba(255,255,255,.9);-webkit-backdrop-filter:saturate(1.4) blur(12px);backdrop-filter:saturate(1.4) blur(12px);border:1px solid var(--line);border-radius:999px;padding:8px 10px 8px 12px;box-shadow:0 4px 18px rgba(15,26,43,.06)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand>div{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.brand b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brand small{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top nav{display:flex;gap:2px;flex:none}
+@media(max-width:520px){.top nav button{padding:8px 10px;font-size:15px}}
+.logo{display:inline-block;flex:none;width:36px;height:36px;border-radius:12px;background:var(--acc) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M12 2.5l2.4 7.1 7.1 2.4-7.1 2.4L12 21.5l-2.4-7.1L2.5 12l7.1-2.4z'/%3E%3C/svg%3E") center/20px no-repeat}
+
+/* formularze */
+label{display:block;font-weight:500;font-size:15px;margin:18px 0 6px}
+input[type=text],input[type=email],input[type=password],input[type=date],input[type=number],textarea,select{width:100%;max-width:100%;font:inherit;color:inherit;background-color:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px;transition:border-color .15s,box-shadow .15s,background-color .15s}
+textarea{resize:vertical;min-height:96px}
+::placeholder{color:#8a95a5}
+input:focus,textarea:focus,select:focus{outline:none;background-color:#fff;border-color:var(--acc);box-shadow:0 0 0 3px rgba(29,78,216,.15)}
+select{-webkit-appearance:none;appearance:none;padding-right:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6b7c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:16px;cursor:pointer}
+input[type=file]{width:100%;font:inherit;color:var(--mute);background:var(--soft);border:1px dashed #c5cedb;border-radius:12px;padding:12px}
+input[type=file]::file-selector-button{font:inherit;font-weight:600;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 14px;margin-right:12px;cursor:pointer}
+
+/* przyciski */
+button{font:inherit;font-weight:500;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;transition:background-color .15s,border-color .15s,color .15s}
+button:hover:not(:disabled){background:var(--bg);border-color:#d3dae4}
+button.pri{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+button.pri:hover:not(:disabled){background:var(--acc-h);border-color:var(--acc-h)}
+button.ghost{background:none;border-color:transparent}
+button.ghost:hover:not(:disabled){background:var(--bg);border-color:transparent}
 button.danger{color:var(--danger)}
+button.danger:hover:not(:disabled){background:var(--danger-soft);border-color:#f5cfcb}
+button.ghost.danger:hover:not(:disabled){border-color:transparent}
 button:disabled{opacity:.5;cursor:default}
-.period{background:var(--pbg);color:var(--pink);border-radius:10px;padding:20px 24px;margin-bottom:16px;border-left:8px solid var(--amber)}
-.period .big{font-size:clamp(28px,6vw,44px);font-weight:700;letter-spacing:-.02em}
-.period .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;align-items:baseline}
-.bar{height:6px;background:rgba(255,255,255,.2);border-radius:3px;margin-top:14px}
-.bar i{display:block;height:100%;background:var(--amber);border-radius:3px}
-.grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
-@media(max-width:800px){.grid{grid-template-columns:1fr}}
-ul.list{list-style:none;margin:10px 0 0;padding:0}
-ul.list button{width:100%;text-align:left;display:flex;justify-content:space-between;gap:10px;border:0;border-top:1px solid var(--line);border-radius:0;background:none;padding:10px 2px}
-ul.list li:first-child button{border-top:0}
-.files{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
-.file{position:relative;width:96px;font-size:12px}
-.file img{width:96px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block;cursor:pointer}
-.file span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.file button{position:absolute;top:2px;right:2px;padding:0 7px;line-height:20px;border-radius:10px}
-.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:22px}
 #st{font-size:14px;color:var(--mute);margin-left:auto}
 #st.err{color:var(--danger)}
-#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
-#toast.on{opacity:1}
-.login{max-width:380px;margin:12vh auto 0}
-.err-msg{color:var(--danger);min-height:1.4em;margin-top:10px}
+.err-msg{color:var(--danger);min-height:1.4em;margin-top:12px;font-size:15px}
 
-select,input[type=date],input[type=number]{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;max-width:100%}
-select{width:100%}
-.badge{font-size:13px;padding:2px 10px;border-radius:10px;border:1px solid var(--line);color:var(--mute);white-space:nowrap}
-.badge.ok{background:var(--acc);color:var(--accink);border-color:var(--acc)}
-.mat{margin-top:16px}.mat h3{font-size:19px}.mat .row{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
-.mat p{white-space:pre-wrap;margin:10px 0 0}.mat .links a{display:block;overflow-wrap:anywhere}
-.val{display:grid;grid-template-columns:130px minmax(0,1fr) auto;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);align-items:end}
-.val label{margin:0 0 4px;font-size:14px}.val input{width:100%}
+/* logowanie i aktywacja */
+.login{max-width:420px;margin:9vh auto 0;padding:32px}
+.login .logo{width:44px;height:44px;border-radius:14px;background-size:24px;margin-bottom:20px}
+.login p{margin:0}.login h1{margin-bottom:8px}
+.login form+p{margin-top:20px;text-align:center}
+.login .actions{margin-top:24px}
+.login .actions button{width:100%;padding:12px}
+
+/* baner okresu: jedyny ciemny element */
+.period{background:var(--dark);color:#fff;border-radius:20px;padding:24px}
+.period .row{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px 20px}
+.period .big{font-size:clamp(30px,6vw,46px);font-weight:600;letter-spacing:-.03em;line-height:1.05}
+.period .chip{background:rgba(255,255,255,.1);color:#fff;font-size:14px;font-weight:500;padding:7px 14px}
+.period .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.period .stats>div{background:rgba(255,255,255,.07);border-radius:12px;padding:12px 16px}
+.period small{display:block;color:rgba(255,255,255,.62)}
+.period .stats b{font-size:18px;font-weight:600}
+.bar{height:6px;background:rgba(255,255,255,.14);border-radius:3px;margin-top:18px;overflow:hidden}
+.bar i{display:block;height:100%;background:#6b9bff;border-radius:3px}
+
+/* widok medium */
+.grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:20px;align-items:start}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+ul.list{list-style:none;margin:10px -8px 0;padding:0}
+ul.list button{width:100%;text-align:left;display:flex;justify-content:space-between;align-items:baseline;gap:10px;border:0;border-radius:10px;background:none;padding:10px 8px}
+ul.list button:hover{background:var(--soft)}
+ul.list button span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ul.list button small{flex:none}
+ul.list li.mute{padding:8px;font-size:15px}
+.files{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}.files:empty{display:none}
+.file{position:relative;width:112px;font-size:12px;color:var(--mute)}
+.file img{width:112px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:block;cursor:zoom-in;background:var(--soft)}
+.file span{display:block;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file button{position:absolute;top:5px;right:5px;width:24px;height:24px;padding:0;line-height:1;border-radius:50%;background:rgba(15,26,43,.78);color:#fff;border:0;font-size:16px;display:grid;place-items:center}
+.file button:hover:not(:disabled){background:var(--danger);border-color:transparent}
+
+/* statusy i etykiety */
+.badge{display:inline-block;font-size:13px;font-weight:600;line-height:1.4;padding:3px 11px;border-radius:999px;background:#eef1f5;color:var(--mute);white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.badge.warn{background:var(--warn-soft);color:var(--warn)}
+.badge.cur{background:var(--acc-soft);color:var(--acc)}
+.chip{display:inline-block;padding:2px 11px;border-radius:999px;background:var(--acc-soft);color:var(--acc);font-weight:600;font-size:13px}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:8px;font-size:14px;color:var(--mute)}
+
+/* materiały, wyceny, tabele */
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px 16px;flex-wrap:wrap}
+.head .actions{margin:0}
+.mat+.mat{margin-top:16px}
+.mat h3{font-size:18px}
+.mat .row{display:flex;justify-content:space-between;gap:10px 16px;align-items:center;flex-wrap:wrap}
+.mat .row>span{color:var(--mute)}
+.mat p{white-space:pre-wrap;margin:12px 0 0}.mat>p:only-child{margin:0}
+.mat .links a{display:block;overflow-wrap:anywhere}
+.val{display:grid;grid-template-columns:140px minmax(0,1fr) auto;gap:12px;margin-top:18px;padding:16px;background:var(--soft);border:1px solid var(--line);border-radius:12px;align-items:end}
+.val label{margin:0 0 6px;font-size:14px}.val input{background-color:#fff}
 @media(max-width:700px){.val{grid-template-columns:1fr}}
-table.t{width:100%;border-collapse:collapse;margin-top:10px}.t td,.t th{text-align:left;padding:7px 4px;border-top:1px solid var(--line);font-size:15px}.t .n{text-align:right;font-variant-numeric:tabular-nums}.t tr.tot td{font-weight:700}
-.copyrow{display:flex;gap:8px;margin-top:12px}.copyrow input{flex:1;min-width:0}
-.formrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:16px 0 4px}
+.tiles>div{background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.tiles small{display:block}
+.tiles b{font-size:22px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+table.t{width:100%;border-collapse:collapse;margin-top:12px}
+.t th{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);text-align:left;padding:10px 8px;border-bottom:1px solid var(--line)}
+.t td{text-align:left;padding:13px 8px;border-top:1px solid var(--line);font-size:15px}
+.t tr:nth-child(2) td{border-top:0}
+.t .n{text-align:right;font-variant-numeric:tabular-nums}
+.t tr.tot td{font-weight:600;border-top:1px solid #cfd7e2}
+@media(max-width:640px){table.t{display:block;overflow-x:auto}.t th,.t td{padding-left:6px;padding-right:6px}.t th{letter-spacing:.02em}}
+.copyrow{display:flex;gap:8px;margin-top:14px}.copyrow input{flex:1;min-width:0}
+.formrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:0 14px}
+#pcard .formrow{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1.3fr)}
+@media(max-width:860px){#pcard .formrow{grid-template-columns:1fr}}
+.inline{display:flex;gap:8px}.inline input{flex:1;min-width:0}
+
+/* komunikat */
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(8px);background:var(--ink);color:#fff;padding:11px 20px;border-radius:14px;font-size:15px;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw;z-index:20;box-shadow:0 10px 30px rgba(15,26,43,.25)}
+#toast.on{opacity:1;transform:translateX(-50%)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
@@ -97,6 +176,7 @@ function setStatus(msg, err) { const s = $('#st'); if (s) { s.textContent = msg;
 /* ---------- logowanie ---------- */
 function showLogin(msg) {
   app.innerHTML = `<div class="card login">
+    <i class="logo"></i>
     <h1>Wyceny mediów</h1>
     <p class="mute">Zaloguj się loginem i hasłem od opiekuna mediów.</p>
     <form id="lf">
@@ -123,6 +203,7 @@ async function showInvite(code) {
   const inv = data && data[0];
   if (!inv) { clearInviteUrl(); return showLogin('Ten link aktywacyjny jest nieprawidłowy, został już użyty albo wygasł. Poproś opiekuna o nowy.'); }
   app.innerHTML = `<div class="card login">
+    <i class="logo"></i>
     <h1>Aktywacja konta</h1>
     <p class="mute">Zaproszenie: ${inv.role === 'leader' ? 'lider' : 'pomocnik'} medium <b>${esc(inv.media_name)}</b>. Wymyśl własny login i hasło. Login będzie też Twoją nazwą widoczną na stronie.</p>
     <form id="af">
@@ -179,11 +260,11 @@ const valOf = m => Array.isArray(m.valuations) ? m.valuations[0] : m.valuations;
 const curPeriod = () => A.periods.find(p => p.id === A.pid);
 
 async function showAdmin() {
-  app.innerHTML = `<header class="top"><b>Administrator: ${esc(me.display_name)}</b><button class="ghost" id="out">Wyloguj</button></header>
+  app.innerHTML = `<header class="top"><div class="brand"><i class="logo"></i><div><b>Panel opiekuna</b><small>${esc(me.display_name)}, administrator</small></div></div><nav><button class="ghost" id="out">Wyloguj</button></nav></header>
     <section class="card" id="pcard">Ładowanie…</section>
-    <section class="card" id="sums" style="margin-top:16px"></section>
+    <section class="card" id="sums"></section>
     <div id="mats"></div>
-    <section class="card" id="inv" style="margin-top:16px"></section>`;
+    <section class="card" id="inv"></section>`;
   $('#out').onclick = logout; app.onclick = adminClick; app.onchange = adminChange;
   const [pr, mr] = await Promise.all([
     sb.from('periods').select('*').lte('start_date', todayPL()).order('number', {ascending: false}),
@@ -203,12 +284,12 @@ function renderPeriod() {
   const acts = p.status === 'open' ? '<button data-act="close">Zamknij okres</button><button class="pri" data-act="publish">Opublikuj wycenę</button>'
     : p.status === 'closed' ? '<button data-act="reopen">Otwórz ponownie</button><button class="pri" data-act="publish">Opublikuj wycenę</button>'
     : '<button data-act="unpublish">Cofnij publikację</button>';
-  $('#pcard').innerHTML = `<h2>Wyceny</h2>
-    <label for="psel">Okres</label><select id="psel">${opts}</select>
-    <label for="msel">Pokaż materiały medium</label><select id="msel"><option value="">Wszystkie media</option>${mopts}</select>
-    <div class="actions">${acts}</div>
-    <label for="dl">Termin podsumowania (tylko informacja)</label>
-    <div class="actions" style="margin-top:0"><input id="dl" type="date" value="${p.valuation_deadline}"><button data-act="deadline">Zapisz termin</button></div>`;
+  $('#pcard').innerHTML = `<div class="head"><div><h2>Wyceny</h2><div class="meta"><span class="badge ${p.status === 'published' ? 'ok' : p.status === 'open' ? 'cur' : ''}">${PST[p.status]}</span></div></div><div class="actions">${acts}</div></div>
+    <div class="formrow">
+      <div><label for="psel">Okres</label><select id="psel">${opts}</select></div>
+      <div><label for="msel">Medium</label><select id="msel"><option value="">Wszystkie media</option>${mopts}</select></div>
+      <div><label for="dl">Termin podsumowania (informacyjny)</label><div class="inline"><input id="dl" type="date" value="${p.valuation_deadline}"><button data-act="deadline">Zapisz termin</button></div></div>
+    </div>`;
 }
 
 async function setPeriodStatus(status, okMsg) {
@@ -234,7 +315,7 @@ async function loadMats() {
   renderMats(); renderSums();
 }
 
-function badge(m) { const v = valOf(m); return v ? `<span class="badge ok">wyceniony: ${money(v.amount)}</span>` : '<span class="badge">niewyceniony</span>'; }
+function badge(m) { const v = valOf(m); return v ? `<span class="badge ok">wyceniony: ${money(v.amount)}</span>` : '<span class="badge warn">niewyceniony</span>'; }
 
 function renderMats() {
   const list = A.mats.filter(m => !A.mid || m.media_id === A.mid);
@@ -245,13 +326,13 @@ function renderMats() {
     const files = m.material_files.map(f => `<div class="file"><img src="${esc(A.urls[f.storage_path] || '')}" data-url="${esc(A.urls[f.storage_path] || '')}" alt="${esc(f.file_name)}"><span>${esc(f.file_name)}</span></div>`).join('');
     return `<article class="card mat" data-card="${m.id}">
       <div class="row"><h3>${esc(m.title)}</h3><span data-badge>${badge(m)}</span></div>
-      <small>${esc(m.media.name)} · ${esc(m.author ? m.author.display_name : '?')} · wysłano ${fmtTime(m.submitted_at)}</small>
+      <div class="meta"><span class="chip">${esc(m.media.name)}</span><span>${esc(m.author ? m.author.display_name : '?')}</span><span>wysłano ${fmtTime(m.submitted_at)}</span></div>
       ${m.description ? `<p>${esc(m.description)}</p>` : ''}
       ${links ? `<div class="links" style="margin-top:10px">${links}</div>` : ''}
       ${files ? `<div class="files">${files}</div>` : ''}
       <div class="val">
-        <div><label>Kwota</label><input type="text" inputmode="decimal" data-amt value="${v.amount != null ? String(v.amount).replace('.', ',') : ''}"></div>
-        <div><label>Za co</label><input type="text" data-note maxlength="300" value="${esc(v.note || '')}"></div>
+        <div><label>Kwota</label><input type="text" inputmode="decimal" aria-label="Kwota" data-amt value="${v.amount != null ? String(v.amount).replace('.', ',') : ''}"></div>
+        <div><label>Za co</label><input type="text" aria-label="Za co" data-note maxlength="300" value="${esc(v.note || '')}"></div>
         <button class="pri" data-act="save" data-id="${m.id}">Zapisz wycenę</button>
       </div></article>`;
   }).join('');
@@ -267,7 +348,7 @@ function renderSums() {
   const rows = Object.keys(by).sort().map(k => `<tr><td>${esc(k)}</td><td class="n">${by[k].n}</td><td class="n">${by[k].un}</td><td class="n">${money(by[k].sum)}</td></tr>`).join('');
   const total = Object.values(by).reduce((a, r) => a + r.sum, 0);
   $('#sums').innerHTML = `<h2>Sumy okresu</h2>` + (rows
-    ? `<table class="t"><tr><th>Medium</th><th class="n">Materiały</th><th class="n">Bez wyceny</th><th class="n">Suma</th></tr>${rows}<tr class="tot"><td>Razem</td><td class="n">${A.mats.length}</td><td class="n">${un}</td><td class="n">${money(total)}</td></tr></table>`
+    ? `<div class="tiles"><div><small>Materiały</small><b>${A.mats.length}</b></div><div><small>Bez wyceny</small><b>${un}</b></div><div><small>Suma okresu</small><b>${money(total)}</b></div></div><table class="t"><tr><th>Medium</th><th class="n">Materiały</th><th class="n">Bez wyceny</th><th class="n">Suma</th></tr>${rows}<tr class="tot"><td>Razem</td><td class="n">${A.mats.length}</td><td class="n">${un}</td><td class="n">${money(total)}</td></tr></table>`
     : '<p class="mute">Brak materiałów do podsumowania.</p>');
 }
 
@@ -348,7 +429,7 @@ async function loadInvites() {
     const used = !!i.used_at, dead = !used && i.expires_at && new Date(i.expires_at) < now;
     const st = used ? 'użyte przez ' + esc(i.user ? i.user.display_name : '?') : dead ? 'wygasło' : 'ważne';
     const act = !used && !dead ? `<button class="ghost danger" data-act="revoke" data-code="${esc(i.code)}">Unieważnij</button>` : '';
-    return `<tr><td>${esc(i.media.name)}</td><td>${i.role === 'leader' ? 'lider' : 'pomocnik'}</td><td>${esc(i.note)}</td><td>${st}</td><td>${act}</td></tr>`;
+    return `<tr><td>${esc(i.media.name)}</td><td>${i.role === 'leader' ? 'lider' : 'pomocnik'}</td><td>${esc(i.note)}</td><td><span class="badge ${used ? 'ok' : dead ? '' : 'cur'}">${st}</span></td><td>${act}</td></tr>`;
   };
   box.innerHTML = data.length ? `<table class="t"><tr><th>Medium</th><th>Rola</th><th>Notatka</th><th>Stan</th><th></th></tr>${data.map(row).join('')}</table>` : '<p class="mute">Brak zaproszeń.</p>';
 }
@@ -362,13 +443,13 @@ function showApp() {
     const pct = Math.min(100, Math.max(0, (total - left) / total * 100));
     banner = `<section class="period">
       <div class="row"><div class="big">Okres ${period.number}</div>
-      <div>${fmtDate(period.start_date)} – ${fmtDate(period.end_date)}</div></div>
-      <div class="row"><span>Wycena: ${fmtDate(period.end_date)}</span><span>${left === 1 ? 'ostatni dzień zbierania' : 'zostało ' + left + ' dni'}</span></div>
+      <span class="chip">${fmtDate(period.start_date)} – ${fmtDate(period.end_date)}</span></div>
+      <div class="stats"><div><small>Wycena</small><b>${fmtDate(period.end_date)}</b></div><div><small>Do końca okresu</small><b>${left === 1 ? 'ostatni dzień' : left + ' dni'}</b></div></div>
       <div class="bar"><i style="width:${pct}%"></i></div></section>`;
   }
   app.innerHTML = `
-  <header class="top"><div><b>${esc(me.media.name)}</b> <span class="mute">${esc(me.display_name)}, ${me.role === 'leader' ? 'lider' : 'pomocnik'}</span></div>
-    <span><button class="ghost" id="arch">Archiwum</button> <button class="ghost" id="out">Wyloguj</button></span></header>
+  <header class="top"><div class="brand"><i class="logo"></i><div><b>${esc(me.media.name)}</b><small>${esc(me.display_name)}, ${me.role === 'leader' ? 'lider' : 'pomocnik'}</small></div></div>
+    <nav><button class="ghost" id="arch">Archiwum</button><button class="ghost" id="out">Wyloguj</button></nav></header>
   ${banner}
   <div class="grid">
     <section class="card">
@@ -417,7 +498,7 @@ async function loadLists() {
 
 /* ---------- archiwum medium (ostatnie 5 opublikowanych okresów) ---------- */
 async function showArchive() {
-  app.innerHTML = `<header class="top"><b>Archiwum wycen: ${esc(me.media.name)}</b><span><button class="ghost" id="back">Wróć do materiałów</button> <button class="ghost" id="out">Wyloguj</button></span></header>
+  app.innerHTML = `<header class="top"><div class="brand"><i class="logo"></i><div><b>Archiwum wycen</b><small>${esc(me.media.name)}</small></div></div><nav><button class="ghost" id="back">Wróć do materiałów</button><button class="ghost" id="out">Wyloguj</button></nav></header>
     <div id="arc"><p class="mute">Ładowanie…</p></div>`;
   $('#out').onclick = logout; $('#back').onclick = () => init();
   const fail = m => { $('#arc').innerHTML = `<div class="card"><p class="err-msg">Nie udało się wczytać archiwum: ${esc(m)}. Odśwież stronę.</p></div>`; };
@@ -432,7 +513,7 @@ async function showArchive() {
     const list = mr.data.filter(m => m.period_id === p.id);
     const sum = list.reduce((a, m) => a + (valOf(m) ? Number(valOf(m).amount) : 0), 0);
     const rows = list.map(m => { const v = valOf(m); return `<tr><td>${esc(m.title)}</td><td>${v ? esc(v.note) : ''}</td><td class="n">${v ? money(v.amount) : 'bez wyceny'}</td></tr>`; }).join('');
-    return `<section class="card mat"><div class="row"><h2>Okres ${p.number}</h2><span>${fmtDate(p.start_date)} – ${fmtDate(p.end_date)}${p.start_date <= t && t <= p.end_date ? ' <span class="badge">bieżący</span>' : ''}</span></div>` +
+    return `<section class="card mat"><div class="row"><h2>Okres ${p.number}</h2><span>${fmtDate(p.start_date)} – ${fmtDate(p.end_date)}${p.start_date <= t && t <= p.end_date ? ' <span class="badge cur">bieżący</span>' : ''}</span></div>` +
       (list.length ? `<table class="t"><tr><th>Materiał</th><th>Za co</th><th class="n">Kwota</th></tr>${rows}<tr class="tot"><td colspan="2">Suma medium</td><td class="n">${money(sum)}</td></tr></table>` : '<p class="mute">W tym okresie nie wysłano materiałów.</p>') + '</section>';
   }).join('');
 }
