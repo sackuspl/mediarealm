@@ -850,12 +850,14 @@ function showApp() {
   let banner = '<section class="period"><div class="big">Brak aktywnego okresu</div></section>';
   if (period) {
     const total = days(period.start_date, period.end_date) + 1;
-    const left = days(todayPL(), period.end_date) + 1;
+    const toEnd = days(todayPL(), period.end_date); // dni kalendarzowe do końca okresu (= dnia wyceny)
+    const left = toEnd + 1; // z dzisiejszym dniem; tylko do paska postępu
     const pct = Math.min(100, Math.max(0, (total - left) / total * 100));
+    const leftTxt = toEnd <= 0 ? 'dziś' : toEnd === 1 ? '1 dzień' : toEnd + ' dni';
     banner = `<section class="period">
       <div class="row"><div class="big">Okres ${period.number}</div>
       <span class="chip">${fmtDate(period.start_date)} – ${fmtDate(period.end_date)}</span></div>
-      <div class="stats"><div><small>Wycena</small><b>${fmtDate(period.valuation_deadline || period.end_date)}</b></div><div><small>Do końca okresu</small><b>${left === 1 ? 'ostatni dzień' : left + ' dni'}</b></div></div>
+      <div class="stats"><div><small>Wycena</small><b>${fmtDate(period.end_date)}</b></div><div><small>Do końca okresu</small><b>${leftTxt}</b></div></div>
       <div class="bar"><i style="width:${pct}%"></i></div></section>`;
   }
   app.innerHTML = `
