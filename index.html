@@ -224,9 +224,15 @@ ul.tips li+li{margin-top:4px}
 @media(max-width:520px){.ghead{padding:14px}.mhead{padding:12px}.cin{padding:12px 14px 16px}.ghead .av{width:30px;height:30px;border-radius:10px}.ghead .badge{display:none}}
 
 /* wycena medium: zwijane materiały i dodatki */
-.mlist{display:grid;gap:10px;margin-top:12px}
-.mlist+table.t{margin-top:18px}
-.sub{margin-top:22px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
+.mlist{display:grid;gap:10px}
+.mlist .links a{display:block;overflow-wrap:anywhere}
+.mlist .cin>p{white-space:pre-wrap}
+.cin>.sub:first-child{margin-top:0}
+.ghead .badge.psum{display:inline-block}
+.gt small .badge{margin-left:6px}
+.mitem.sumv{padding:0}
+.mitem.sumv,.mitem.sumv.open{border-left-color:var(--acc)}
+.sub{margin-top:10px;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mute)}
 .bon{display:flex;justify-content:space-between;align-items:baseline;gap:4px 16px;flex-wrap:wrap;padding:13px 16px;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
 .bon>div{flex:1;min-width:200px}.bon b{font-weight:600}.bon small{display:block;white-space:pre-wrap}
 .bon .amt{font-weight:600;font-variant-numeric:tabular-nums}
@@ -571,12 +577,11 @@ const thumb = (url, name) => `<div class="file"><img src="${esc(url)}" data-url=
 function sumView(mid) {
   const s = A.sums[String(mid)];
   if (!s) return '<div class="sumv none">Medium nie dodało podsumowania (jest opcjonalne).</div>';
+  const key = 's:' + mid, open = A.open.has(key);
   const links = linkList(s.links), files = (s.files || []).map(f => thumb(A.urls[f.path] || '', f.name)).join('');
-  return `<article class="mat sumv">
-    <div class="row"><h3>Podsumowanie medium</h3><span>${s.author ? esc(s.author.display_name) + ', ' : ''}zapisano ${fmtTime(s.updated_at)}</span></div>
-    ${s.description ? `<p>${esc(s.description)}</p>` : ''}
-    ${links ? `<div class="links">${links}</div>` : ''}
-    ${files ? `<div class="files">${files}</div>` : ''}</article>`;
+  const body = (s.description ? `<p>${esc(s.description)}</p>` : '') + (links ? `<div class="links">${links}</div>` : '') + (files ? `<div class="files">${files}</div>` : '');
+  return `<article class="mat mitem sumv${open ? ' open' : ''}" data-key="${esc(key)}"><button class="mhead" data-tg aria-expanded="${open}"><span class="mt"><b>Podsumowanie medium</b><small>${s.author ? esc(s.author.display_name) + ', ' : ''}zapisano ${fmtTime(s.updated_at)}</small></span><i class="chev"></i></button>
+    <div class="collapse"><div class="cwrap"><div class="cin">${body || '<p class="mute">Brak treści.</p>'}</div></div></div></article>`;
 }
 
 // zwijany materiał: w nagłówku tytuł i status wyceny, po rozwinięciu szczegóły i pole kwoty
@@ -682,7 +687,7 @@ async function adminClick(e) {
   if (act === 'unpublish') { if (confirm('Cofnąć publikację? Media przestaną widzieć kwoty z okresu ' + p.number + '.')) setPeriodStatus('closed', 'Publikacja cofnięta.'); }
   if (act === 'publish') {
     const un = A.mats.filter(m => !valOf(m)).length;
-    if (confirm('Opublikować wyceny okresu ' + p.number + '? Media zobaczą swoje kwoty.' + (un ? '\n\nUwaga: ' + un + ' materiałów nie ma jeszcze wyceny.' : ''))) setPeriodStatus('published', 'Wycena opublikowana.');
+    if (confirm('Opublikować wyceny okresu ' + p.number + '? Media zobaczą swoje kwoty, a okres będzie traktowany jako zamknięty (nie będą mogły już dodawać ani zmieniać materiałów i podsumowania).' + (un ? '\n\nUwaga: ' + un + ' materiałów nie ma jeszcze wyceny.' : ''))) setPeriodStatus('published', 'Wycena opublikowana.');
   }
   if (act === 'deadline') {
     const d = $('#dl').value; if (!d) return toast('Wybierz datę.');
@@ -867,6 +872,7 @@ function showApp() {
       <label for="li">Linki do screenów</label><textarea id="li" style="min-height:64px" placeholder="https://... (każdy w nowej linii)"></textarea>
       <label for="fi">Screeny (do ${MAX_MB} MB)</label>
       <input id="fi" type="file" accept="image/*" multiple>
+      <small class="hint">Screena możesz też wkleić skrótem Ctrl + V.</small>
       <div class="files" id="files"></div>
       <div class="actions">
         <button class="pri" id="send">Wyślij do wyceny</button>
@@ -913,21 +919,21 @@ function sumHtml() {
   return `<details class="card sumbox" id="sumbox">
     <summary><span class="tt"><b>Podsumowanie okresu</b><small>Opcjonalne. Opisz osiągnięcia i wszystko, co ma wpłynąć na wycenę.</small></span><span class="chip off">opcjonalne</span><span class="badge" id="sumbadge">nie dodano</span></summary>
     <div class="sumbody">
-      <p>Podsumowanie jest <b>opcjonalne</b>, ale bardzo pomaga w wycenie. Opiekun zobaczy je na samej górze wyceny Waszego medium, nad materiałami. Wypisz tu wszystko, co powinno zostać wzięte pod uwagę:</p>
+      <p>Podsumowanie jest <b>opcjonalne</b>. Wypisz tu wszystko, co powinno zostać wzięte pod uwagę:</p>
       <ul class="tips">
-        <li>osiągnięcia i wyniki z tego okresu: zasięgi, wyświetlenia, rekordy, wyróżnienia, nowi odbiorcy</li>
+        <li>osiągnięcia i wyniki z tego okresu</li>
         <li>największe projekty, akcje i wydarzenia, które zrobiło medium</li>
-        <li>pracę, której nie widać w pojedynczych materiałach: organizację, współprace, moderację, rozwój kanału</li>
-        <li>wkład konkretnych osób z zespołu</li>
+        <li>pracę, której nie widać w pojedynczych materiałach: organizację, współprace, moderację, rozwój</li>
         <li>kontekst, który wpływa na ocenę: utrudnienia, nietypowe okoliczności, plany na kolejny okres</li>
       </ul>
-      <small class="mute">Nie musi być długie, ważne żeby było konkretne. Screeny są mile widziane, ale najważniejszy jest opis. Możesz edytować podsumowanie, dopóki okres jest otwarty.</small>
+      <small class="mute">Nie musi być długie, ważne żeby było konkretne.</small>
       <label for="sd">Podsumowanie</label>
       <textarea id="sd" style="min-height:170px" placeholder="Np. najważniejsze osiągnięcia, wyniki i zasięgi, kto co zrobił, na co zwrócić uwagę przy wycenie…"></textarea>
       <label for="sl">Linki do screenów (opcjonalnie)</label>
       <textarea id="sl" style="min-height:64px" placeholder="https://... (każdy w nowej linii)"></textarea>
       <label for="sf">Screeny (opcjonalnie, do ${MAX_MB} MB)</label>
       <input id="sf" type="file" accept="image/*" multiple>
+      <small class="hint">Screena możesz też wkleić skrótem Ctrl + V.</small>
       <div class="files" id="sfiles"></div>
       <div class="actions"><button class="pri" id="ssave">Zapisz podsumowanie</button><span id="sst" aria-live="polite"></span></div>
     </div></details>`;
@@ -1103,14 +1109,16 @@ async function showArchive() {
   }
   const t = todayPL();
   $('#arc').innerHTML = pr.data.map(p => {
-    const list = mr.data.filter(m => m.period_id === p.id), bl = bons.filter(x => x.period_id === p.id);
+    const list = mr.data.filter(m => m.period_id === p.id), bl = bons.filter(x => x.period_id === p.id), any = list.length || bl.length;
     const sum = list.reduce((a, m) => a + (valOf(m) ? Number(valOf(m).amount) : 0), 0), bsum = bl.reduce((a, x) => a + Number(x.amount), 0);
-    const head = `<div class="row"><h2>Okres ${p.number}</h2><span>${fmtDate(p.start_date)} – ${fmtDate(p.end_date)}${p.start_date <= t && t <= p.end_date ? ' <span class="badge cur">bieżący</span>' : ''}${NT.fresh.has(String(p.id)) ? ' <span class="badge ok">nowa wycena</span>' : ''}</span></div>`;
+    const key = 'p:' + p.id, open = A.open.has(key);
+    const badges = (p.start_date <= t && t <= p.end_date ? '<span class="badge cur">bieżący</span>' : '') + (NT.fresh.has(String(p.id)) ? '<span class="badge ok">nowa wycena</span>' : '');
     const tot = `<table class="t"><tr><th>Podsumowanie</th><th class="n">Kwota</th></tr>${bl.length ? `<tr><td>Materiały</td><td class="n">${money(sum)}</td></tr><tr><td>Dodatki</td><td class="n">${money(bsum)}</td></tr>` : ''}<tr class="tot"><td>${bl.length ? 'Razem' : 'Suma medium'}</td><td class="n">${money(sum + bsum)}</td></tr></table>`;
-    return `<section class="card mat">${head}`
-      + (list.length ? `<div class="sub">Materiały</div><div class="mlist">${list.map(m => archItem(m, urls)).join('')}</div>` : '')
-      + (bl.length ? `<div class="sub">Dodatki</div><div class="mlist">${bl.map(archBonus).join('')}</div>` : '')
-      + (list.length || bl.length ? tot : '<p class="mute">W tym okresie nie wysłano materiałów.</p>') + '</section>';
+    const body = any ? (list.length ? `<div class="sub">Materiały</div><div class="mlist">${list.map(m => archItem(m, urls)).join('')}</div>` : '')
+      + (bl.length ? `<div class="sub">Dodatki</div><div class="mlist">${bl.map(archBonus).join('')}</div>` : '') + tot
+      : '<p class="mute">W tym okresie nie wysłano materiałów.</p>';
+    return `<section class="card grp${open ? ' open' : ''}" data-key="${esc(key)}"><button class="ghead" data-tg aria-expanded="${open}"><span class="gt"><b>Okres ${p.number}</b><small>${fmtDate(p.start_date)} – ${fmtDate(p.end_date)}${badges}</small></span><span class="badge ${any ? 'ok' : ''} psum">${any ? money(sum + bsum) : 'brak'}</span><i class="chev"></i></button>
+      <div class="collapse"><div class="cwrap"><div class="cin">${body}</div></div></div></section>`;
   }).join('');
 }
 
@@ -1222,7 +1230,9 @@ async function renderFiles() {
 document.addEventListener('paste', e => {
   if (!cur || !$('#ti') || !e.clipboardData) return;
   const imgs = [...e.clipboardData.files].filter(f => f.type.startsWith('image/'));
-  if (imgs.length) { e.preventDefault(); addFiles(imgs); }
+  if (!imgs.length) return;
+  e.preventDefault();
+  if (e.target.closest && e.target.closest('#sumbox')) { if (!$('#sf').disabled) addSumFiles(imgs); } else addFiles(imgs);
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) persistSafe(); });
 
